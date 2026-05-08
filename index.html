@@ -3,104 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Option Buying Power Rechner v2</title>
+  <title>Option Buying Power Rechner</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f0f2f5;
-      color: #1a1a2e;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
       min-height: 100vh;
-      padding: 20px;
+      padding: 24px 16px;
+      color: #fff;
     }
     h1 {
       text-align: center;
-      font-size: 1.4rem;
+      font-size: 1.5rem;
+      font-weight: 800;
       margin-bottom: 4px;
-      color: #1a1a2e;
+      letter-spacing: 0.5px;
     }
     .subtitle {
       text-align: center;
-      font-size: 0.8rem;
-      color: #666;
-      margin-bottom: 20px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
     .card {
-      background: white;
-      border-radius: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
       padding: 20px;
       margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      backdrop-filter: blur(10px);
     }
     .card h2 {
-      font-size: 0.95rem;
+      font-size: 0.8rem;
       font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .field {
       margin-bottom: 14px;
-      color: #333;
-      border-bottom: 2px solid #f0f2f5;
-      padding-bottom: 8px;
     }
-    .input-row {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 12px;
-    }
-    label {
-      font-size: 0.78rem;
+    .field-label {
+      font-size: 0.8rem;
       font-weight: 600;
-      color: #555;
-      margin-bottom: 4px;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 3px;
+      display: block;
     }
-    .hint {
-      font-size: 0.7rem;
-      color: #999;
-      margin-bottom: 4px;
+    .field-hint {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 6px;
+      display: block;
     }
-    input[type="number"], input[type="range"] {
+    input[type="number"] {
       width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid #ddd;
-      border-radius: 8px;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      color: #fff;
       font-size: 1rem;
-      background: #fafafa;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, background 0.2s;
     }
+    input[type="number"]::placeholder { color: rgba(255,255,255,0.25); }
     input[type="number"]:focus {
       outline: none;
-      border-color: #4361ee;
-      background: white;
+      border-color: #7c6ff7;
+      background: rgba(255,255,255,0.13);
     }
     input[type="range"] {
-      padding: 0;
-      margin-top: 4px;
-      accent-color: #4361ee;
+      width: 100%;
+      accent-color: #7c6ff7;
+      margin-top: 6px;
     }
-    .range-row {
+    .slider-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.72rem;
-      color: #888;
-      margin-top: 2px;
+      align-items: center;
     }
     .slider-val {
-      font-weight: 700;
-      color: #4361ee;
-      font-size: 0.85rem;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #a89cf7;
     }
-    button {
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.3);
+      margin-top: 3px;
+    }
+
+    .btn {
       width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #4361ee, #3a0ca3);
+      padding: 15px;
+      background: linear-gradient(135deg, #7c6ff7, #4338ca);
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 1rem;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
       cursor: pointer;
-      letter-spacing: 0.5px;
-      transition: opacity 0.2s;
+      box-shadow: 0 8px 24px rgba(124,111,247,0.35);
+      transition: opacity 0.2s, transform 0.1s;
     }
-    button:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
 
     /* Ampel */
     .ampel {
@@ -109,21 +125,46 @@
       gap: 14px;
       padding: 16px;
       border-radius: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.9rem;
     }
-    .ampel.gruen { background: #d4edda; color: #155724; }
-    .ampel.gelb  { background: #fff3cd; color: #856404; }
-    .ampel.rot   { background: #f8d7da; color: #721c24; }
+    .ampel.gruen { background: rgba(40,167,69,0.2); border: 1px solid rgba(40,167,69,0.5); color: #6fcf97; }
+    .ampel.gelb  { background: rgba(255,193,7,0.15); border: 1px solid rgba(255,193,7,0.4); color: #f2c94c; }
+    .ampel.rot   { background: rgba(220,53,69,0.2); border: 1px solid rgba(220,53,69,0.5); color: #eb5757; }
     .ampel-dot {
-      width: 28px; height: 28px;
+      width: 26px; height: 26px;
       border-radius: 50%;
       flex-shrink: 0;
+      box-shadow: 0 0 12px currentColor;
     }
     .gruen .ampel-dot { background: #28a745; }
     .gelb  .ampel-dot { background: #ffc107; }
     .rot   .ampel-dot { background: #dc3545; }
+
+    .result-main {
+      background: rgba(124,111,247,0.15);
+      border: 1.5px solid rgba(124,111,247,0.4);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .result-main .rlabel {
+      font-size: 0.72rem;
+      color: #a89cf7;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .result-main .rval {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .result-main .rval.neg { color: #eb5757; }
+    .result-main .rval.pos { color: #6fcf97; }
 
     .result-grid {
       display: grid;
@@ -131,137 +172,123 @@
       gap: 10px;
       margin-bottom: 14px;
     }
-    .result-box {
-      background: #f8f9ff;
-      border-radius: 10px;
+    .rbox {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
       padding: 12px;
       text-align: center;
-      border: 1.5px solid #e8ecff;
     }
-    .result-box .label {
-      font-size: 0.68rem;
-      color: #888;
-      margin-bottom: 4px;
-      line-height: 1.3;
+    .rbox .rlabel {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
     }
-    .result-box .val {
-      font-size: 1.05rem;
+    .rbox .rval {
+      font-size: 0.95rem;
       font-weight: 800;
-      color: #1a1a2e;
+      color: #fff;
     }
-    .result-box .val.neg { color: #dc3545; }
-    .result-box .val.pos { color: #28a745; }
-
-    .result-main {
-      background: linear-gradient(135deg, #4361ee15, #3a0ca315);
-      border: 2px solid #4361ee;
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      margin-bottom: 14px;
-    }
-    .result-main .label {
-      font-size: 0.75rem;
-      color: #4361ee;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .result-main .val {
-      font-size: 1.6rem;
-      font-weight: 900;
-      color: #1a1a2e;
-    }
-    .result-main .val.neg { color: #dc3545; }
+    .rbox .rval.neg { color: #eb5757; }
+    .rbox .rval.pos { color: #6fcf97; }
+    .rbox .rval.warn { color: #f2c94c; }
 
     .erklaerung {
-      font-size: 0.75rem;
-      color: #666;
-      background: #f8f9ff;
-      border-radius: 8px;
-      padding: 12px;
-      line-height: 1.6;
-    }
-    .erklaerung b { color: #333; }
-
-    .where-to-find {
-      background: #fffbf0;
-      border: 1px solid #ffe082;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 10px;
-      padding: 12px;
-      font-size: 0.72rem;
-      color: #6d4c00;
-      margin-top: 8px;
+      padding: 14px;
+      font-size: 0.73rem;
+      color: rgba(255,255,255,0.55);
       line-height: 1.7;
     }
-    .where-to-find b { color: #4a3000; }
+    .erklaerung b { color: rgba(255,255,255,0.85); }
 
-    @media (max-width: 400px) {
+    .where-box {
+      background: rgba(255,193,7,0.07);
+      border: 1px solid rgba(255,193,7,0.2);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.8;
+    }
+    .where-box b { color: #f2c94c; }
+
+    @media (max-width: 380px) {
       .result-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<h1>Option Buying Power Rechner</h1>
-<p class="subtitle">Charles Schwab · Version 2 · Margin-Sicherheitsrechner</p>
+<h1>Option Buying Power</h1>
+<p class="subtitle">Charles Schwab &middot; Margin-Sicherheitsrechner &middot; v2</p>
 
-<!-- Eingaben -->
 <div class="card">
-  <h2>Werte aus Schwab Balance Details</h2>
+  <h2>Schwab Balance Details</h2>
 
-  <div class="input-row">
-    abel>Net Liquidating Value (Account Value) $</label>
-    <div class="hint">Accounts → Summary → Total Value</div>
+  <div class="field">
+    <span class="field-label">Net Liquidating Value (Account Value) $</span>
+    <span class="field-hint">Accounts → Summary → Total Value</span>
     <input type="number" id="nlv" placeholder="z.B. 631000" min="0" />
   </div>
 
-  <div class="input-row">
-    abel>Margin Equity $</label>
-    <div class="hint">Balances → Balance Details → Margin Details → Margin Equity</div>
+  <div class="field">
+    <span class="field-label">Margin Equity $</span>
+    <span class="field-hint">Balances → Balance Details → Margin Details → Margin Equity</span>
     <input type="number" id="marginEquity" placeholder="z.B. 495000" min="0" />
   </div>
 
-  <div class="input-row">
-    abel>Equity Percent %</label>
-    <div class="hint">Balances → Balance Details → Margin Details → Equity Percent</div>
+  <div class="field">
+    <span class="field-label">Equity Percent %</span>
+    <span class="field-hint">Balances → Balance Details → Margin Details → Equity Percent</span>
     <input type="number" id="equityPct" placeholder="z.B. 100" min="0" max="999" />
   </div>
 
-  <div class="input-row">
-    abel>Maintenance Requirement $</label>
-    <div class="hint">thinkorswim → Monitor → Account Statement → Maintenance Req.</div>
+  <div class="field">
+    <span class="field-label">Maintenance Requirement $</span>
+    <span class="field-hint">thinkorswim → Monitor → Account Statement → Maintenance Req.</span>
     <input type="number" id="mainReq" placeholder="z.B. 80000" min="0" />
   </div>
 
-  <div class="input-row">
-    abel>Short Options Buying Power $</label>
-    <div class="hint">Balances → Margin Buying Power → Options → Short Options</div>
+  <div class="field">
+    <span class="field-label">Short Options Buying Power $</span>
+    <span class="field-hint">Balances → Margin Buying Power → Options → Short Options</span>
     <input type="number" id="shortOBP" placeholder="z.B. 171996" min="0" />
   </div>
 </div>
 
-<!-- Sicherheitsparameter -->
 <div class="card">
   <h2>Sicherheitsparameter</h2>
 
-  <div class="input-row">
-    abel>Marktstress-Abschlag: <span class="slider-val" id="stressVal">12</span>%</label>
-    <div class="hint">Simulierter Verlust des Account Value bei Marktrückgang</div>
-    <input type="range" id="stress" min="5" max="30" value="12" oninput="document.getElementById('stressVal').textContent=this.value" />
-    <div class="range-row"><span>5% (gering)</span><span>30% (extrem)</span></div>
+  <div class="field">
+    <div class="slider-header">
+      <span class="field-label">Marktstress-Abschlag</span>
+      <span class="slider-val" id="stressVal">12</span>
+    </div>
+    <span class="field-hint">Simulierter Verlust des Account Value bei Marktrückgang</span>
+    <input type="range" id="stress" min="5" max="30" value="12"
+      oninput="document.getElementById('stressVal').textContent=this.value+'%'" />
+    <div class="range-labels"><span>5% gering</span><span>30% extrem</span></div>
   </div>
 
-  <div class="input-row">
-    abel>Mindestreserve: <span class="slider-val" id="reserveVal">8</span>%</label>
-    <div class="hint">Fester Puffer auf Basis des Account Value, immer frei halten</div>
-    <input type="range" id="reserve" min="3" max="20" value="8" oninput="document.getElementById('reserveVal').textContent=this.value" />
-    <div class="range-row"><span>3% (eng)</span><span>20% (sehr konservativ)</span></div>
+  <div class="field">
+    <div class="slider-header">
+      <span class="field-label">Mindestreserve</span>
+      <span class="slider-val" id="reserveVal">8</span>
+    </div>
+    <span class="field-hint">Fester Puffer auf Basis des Account Value, immer frei halten</span>
+    <input type="range" id="reserve" min="3" max="20" value="8"
+      oninput="document.getElementById('reserveVal').textContent=this.value+'%'" />
+    <div class="range-labels"><span>3% eng</span><span>20% sehr konservativ</span></div>
   </div>
 </div>
 
-<button onclick="rechnen()">Berechnen</button>
+<button class="btn" onclick="rechnen()">Berechnen</button>
 
-<!-- Ergebnis -->
 <div class="card" id="ergebnis" style="display:none; margin-top:16px;">
   <h2>Ergebnis</h2>
 
@@ -271,134 +298,129 @@
   </div>
 
   <div class="result-main">
-    <div class="label">Maximal nutzbare Option Buying Power</div>
-    <div class="val" id="maxNutzbar">—</div>
+    <div class="rlabel">Maximal nutzbare Option Buying Power</div>
+    <div class="rval" id="maxNutzbar">—</div>
   </div>
 
   <div class="result-grid">
-    <div class="result-box">
-      <div class="label">Empfohlene freie Reserve</div>
-      <div class="val" id="freieReserve">—</div>
+    <div class="rbox">
+      <div class="rlabel">Freie Reserve</div>
+      <div class="rval" id="freieReserve">—</div>
     </div>
-    <div class="result-box">
-      <div class="label">Abstand zum Margin Call</div>
-      <div class="val" id="abstand">—</div>
+    <div class="rbox">
+      <div class="rlabel">Abstand Margin Call</div>
+      <div class="rval" id="abstand">—</div>
     </div>
-    <div class="result-box">
-      <div class="label">Simulierter Stressverlust</div>
-      <div class="val" id="stress2">—</div>
+    <div class="rbox">
+      <div class="rlabel">Stressverlust</div>
+      <div class="rval" id="stressOut">—</div>
     </div>
-    <div class="result-box">
-      <div class="label">Equity Check</div>
-      <div class="val" id="equityCheck">—</div>
+    <div class="rbox">
+      <div class="rlabel">Equity Check</div>
+      <div class="rval" id="equityCheck">—</div>
     </div>
   </div>
 
   <div class="erklaerung" id="erklaerung"></div>
 </div>
 
-<!-- Wo finde ich die Werte -->
 <div class="card">
-  <h2>Wo finde ich diese Werte bei Schwab?</h2>
-  <div class="where-to-find">
+  <h2>Wo finde ich diese Werte?</h2>
+  <div class="where-box">
     <b>Account Value / NLV:</b> Accounts → Summary → Total Value oben links<br/>
-    <b>Margin Equity:</b> Accounts → Balances → Balance Details → rechte Spalte → Margin Details & Buying Power → Margin Equity<br/>
-    <b>Equity Percent:</b> Direkt darunter → Equity Percent<br/>
-    <b>Maintenance Requirement:</b> thinkorswim → Monitor → Account Statement → Margin Requirements, oder Schwab Web → Balances → Option Details (weiter unten scrollen)<br/>
-    <b>Short Options Buying Power:</b> Accounts → Balances → Balance Details → Link „Margin Buying Power" klicken → Options → Short Options (minimum equity required)
+    <b>Margin Equity:</b> Balances → Balance Details → rechte Spalte → Margin Details &amp; Buying Power<br/>
+    <b>Equity Percent:</b> Direkt darunter in der gleichen Spalte<br/>
+    <b>Maintenance Req.:</b> thinkorswim → Monitor → Account Statement → Margin Requirements<br/>
+    <b>Short Options BP:</b> Balances → Link „Margin Buying Power" → Options → Short Options
   </div>
 </div>
 
 <script>
+  document.getElementById('stressVal').textContent = '12%';
+  document.getElementById('reserveVal').textContent = '8%';
+
   function fmt(n) {
-    return n < 0
-      ? "-$" + Math.abs(Math.round(n)).toLocaleString("en-US")
-      : "$" + Math.round(n).toLocaleString("en-US");
+    return (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString('en-US');
   }
 
   function rechnen() {
-    const nlv        = parseFloat(document.getElementById("nlv").value) || 0;
-    const mEq        = parseFloat(document.getElementById("marginEquity").value) || 0;
-    const ePct       = parseFloat(document.getElementById("equityPct").value) || 0;
-    const mainReq    = parseFloat(document.getElementById("mainReq").value) || 0;
-    const shortOBP   = parseFloat(document.getElementById("shortOBP").value) || 0;
-    const stressPct  = parseFloat(document.getElementById("stress").value) / 100;
-    const reservePct = parseFloat(document.getElementById("reserve").value) / 100;
+    const nlv       = parseFloat(document.getElementById('nlv').value) || 0;
+    const mEq       = parseFloat(document.getElementById('marginEquity').value) || 0;
+    const ePct      = parseFloat(document.getElementById('equityPct').value) || 0;
+    const mainReq   = parseFloat(document.getElementById('mainReq').value) || 0;
+    const shortOBP  = parseFloat(document.getElementById('shortOBP').value) || 0;
+    const stressPct = parseFloat(document.getElementById('stress').value) / 100;
+    const resPct    = parseFloat(document.getElementById('reserve').value) / 100;
 
     if (nlv === 0 || shortOBP === 0) {
-      alert("Bitte mindestens Account Value und Short Options Buying Power eintragen.");
+      alert('Bitte mindestens Account Value und Short Options Buying Power eintragen.');
       return;
     }
 
-    // Abstand zum Margin Call
-    const abstandVal = mainReq > 0 ? mEq - mainReq : nlv * 0.25;
+    const stressVerlust  = nlv * stressPct;
+    const minReserve     = nlv * resPct;
+    const zusatz         = mainReq > 0 ? mainReq * 0.10 : nlv * 0.05;
+    const freieReserve   = stressVerlust + minReserve + zusatz;
+    const maxNutzbar     = shortOBP - freieReserve;
+    const abstandVal     = mainReq > 0 && mEq > 0 ? mEq - mainReq : null;
+    const nutzbarPct     = maxNutzbar / shortOBP;
 
-    // Simulierter Stressverlust
-    const stressVerlust = nlv * stressPct;
-
-    // Feste Mindestreserve
-    const minReserve = nlv * reservePct;
-
-    // Zusatzpuffer: 10% der Maintenance Req (falls vorhanden)
-    const zusatzPuffer = mainReq > 0 ? mainReq * 0.10 : nlv * 0.05;
-
-    // Empfohlene freie Reserve = Stressverlust + Mindestreserve + Zusatzpuffer
-    const freieReserveVal = stressVerlust + minReserve + zusatzPuffer;
-
-    // Maximal nutzbare OBP
-    const maxNutzbarVal = shortOBP - freieReserveVal;
-
-    // Equity Check: Warnung wenn Equity Percent < 35% (Schwab Richtwert für Margin-Gesundheit)
-    const equityOK = ePct === 0 || ePct >= 35;
-    const equityCheckText = ePct === 0 ? "Nicht eingegeben" : (ePct >= 50 ? "OK (" + ePct + "%)" : ePct >= 35 ? "Knapp (" + ePct + "%)" : "Kritisch (" + ePct + "%)");
+    // Equity Check
+    let eqText, eqClass;
+    if (ePct === 0) { eqText = 'k.A.'; eqClass = ''; }
+    else if (ePct >= 50) { eqText = 'OK (' + ePct + '%)'; eqClass = 'pos'; }
+    else if (ePct >= 35) { eqText = 'Knapp (' + ePct + '%)'; eqClass = 'warn'; }
+    else { eqText = 'Kritisch (' + ePct + '%)'; eqClass = 'neg'; }
 
     // Ampel
     let ampelKlasse, ampelMsg;
-    const nutzbarPct = maxNutzbarVal / shortOBP;
-    if (maxNutzbarVal <= 0 || !equityOK) {
-      ampelKlasse = "rot";
-      ampelMsg = "KRITISCH — Keine freie Option Buying Power mehr! Keine neuen Positionen eingehen.";
-    } else if (nutzbarPct < 0.25 || abstandVal < stressVerlust * 1.2) {
-      ampelKlasse = "gelb";
-      ampelMsg = "VORSICHT — Puffer wird eng. Nur sehr selektiv neue Positionen.";
+    const equityKritisch = ePct > 0 && ePct < 35;
+    if (maxNutzbar <= 0 || equityKritisch) {
+      ampelKlasse = 'rot';
+      ampelMsg = 'KRITISCH — Kein Spielraum mehr. Keine neuen Short-Option-Positionen!';
+    } else if (nutzbarPct < 0.25 || (abstandVal !== null && abstandVal < stressVerlust * 1.2)) {
+      ampelKlasse = 'gelb';
+      ampelMsg = 'VORSICHT — Puffer wird eng. Nur sehr selektiv neue Positionen eingehen.';
     } else {
-      ampelKlasse = "gruen";
-      ampelMsg = "SICHER — Ausreichend Puffer vorhanden. Neue Positionen möglich.";
+      ampelKlasse = 'gruen';
+      ampelMsg = 'SICHER — Ausreichend Puffer vorhanden. Neue Positionen möglich.';
     }
 
-    // Erklaerung
-    const erkl = `
-      <b>Rechenweg:</b><br/>
-      Stressverlust (${Math.round(stressPct*100)}% von ${fmt(nlv)}): <b>${fmt(stressVerlust)}</b><br/>
-      Mindestreserve (${Math.round(reservePct*100)}% von ${fmt(nlv)}): <b>${fmt(minReserve)}</b><br/>
-      Zusatzpuffer (10% Maintenance): <b>${fmt(zusatzPuffer)}</b><br/>
-      → Empfohlene freie Reserve gesamt: <b>${fmt(freieReserveVal)}</b><br/><br/>
-      <b>Short Options Buying Power:</b> ${fmt(shortOBP)}<br/>
-      <b>minus freie Reserve:</b> ${fmt(freieReserveVal)}<br/>
-      <b>= Maximal nutzbar:</b> ${fmt(maxNutzbarVal)}<br/><br/>
-      ${mainReq > 0 ? `<b>Abstand zum Margin Call:</b> Margin Equity (${fmt(mEq)}) − Maintenance Req. (${fmt(mainReq)}) = ${fmt(abstandVal)}<br/>` : ""}
-    `;
+    // Rechenweg
+    const erkl = '<b>Rechenweg:</b><br/>'
+      + 'Stressverlust (' + Math.round(stressPct*100) + '% × ' + fmt(nlv) + '): <b>' + fmt(stressVerlust) + '</b><br/>'
+      + 'Mindestreserve (' + Math.round(resPct*100) + '% × ' + fmt(nlv) + '): <b>' + fmt(minReserve) + '</b><br/>'
+      + 'Zusatzpuffer (10% × Maintenance): <b>' + fmt(zusatz) + '</b><br/>'
+      + '→ Empfohlene freie Reserve: <b>' + fmt(freieReserve) + '</b><br/><br/>'
+      + 'Short Options BP: <b>' + fmt(shortOBP) + '</b><br/>'
+      + 'minus freie Reserve: <b>' + fmt(freieReserve) + '</b><br/>'
+      + '= Maximal nutzbar: <b>' + fmt(maxNutzbar) + '</b>';
 
     // Ausgabe
-    document.getElementById("ergebnis").style.display = "block";
+    document.getElementById('ergebnis').style.display = 'block';
+    const ampelEl = document.getElementById('ampel');
+    ampelEl.className = 'ampel ' + ampelKlasse;
+    document.getElementById('ampelText').textContent = ampelMsg;
 
-    const ampelEl = document.getElementById("ampel");
-    ampelEl.className = "ampel " + ampelKlasse;
-    document.getElementById("ampelText").textContent = ampelMsg;
+    const mnEl = document.getElementById('maxNutzbar');
+    mnEl.textContent = fmt(maxNutzbar);
+    mnEl.className = 'rval ' + (maxNutzbar < 0 ? 'neg' : 'pos');
 
-    const maxEl = document.getElementById("maxNutzbar");
-    maxEl.textContent = fmt(maxNutzbarVal);
-    maxEl.className = "val " + (maxNutzbarVal < 0 ? "neg" : "pos");
+    document.getElementById('freieReserve').textContent = fmt(freieReserve);
 
-    document.getElementById("freieReserve").textContent = fmt(freieReserveVal);
-    document.getElementById("abstand").textContent = mainReq > 0 ? fmt(abstandVal) : "Keine Eingabe";
-    document.getElementById("stress2").textContent = fmt(stressVerlust);
-    document.getElementById("equityCheck").textContent = equityCheckText;
-    document.getElementById("erklaerung").innerHTML = erkl;
+    const abEl = document.getElementById('abstand');
+    abEl.textContent = abstandVal !== null ? fmt(abstandVal) : 'k.A.';
+    if (abstandVal !== null) abEl.className = 'rval ' + (abstandVal > stressVerlust ? 'pos' : 'warn');
 
-    document.getElementById("ergebnis").scrollIntoView({ behavior: "smooth" });
+    document.getElementById('stressOut').textContent = fmt(stressVerlust);
+
+    const eqEl = document.getElementById('equityCheck');
+    eqEl.textContent = eqText;
+    eqEl.className = 'rval ' + eqClass;
+
+    document.getElementById('erklaerung').innerHTML = erkl;
+    document.getElementById('ergebnis').scrollIntoView({ behavior: 'smooth' });
   }
 </script>
-
 </body>
 </html>
