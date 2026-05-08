@@ -5,159 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Option Buying Power Rechner</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      min-height: 100vh;
-      padding: 24px 16px 40px;
-      color: #fff;
-    }
-    h1 { text-align: center; font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
-    .subtitle {
-      text-align: center; font-size: 0.72rem;
-      color: rgba(255,255,255,0.45); margin-bottom: 6px;
-      letter-spacing: 1px; text-transform: uppercase;
-    }
-    .version-badge {
-      display: block; text-align: center; margin-bottom: 22px;
-      font-size: 0.65rem; color: #a89cf7; letter-spacing: 1px;
-    }
-    .card {
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 16px; padding: 20px; margin-bottom: 14px;
-      backdrop-filter: blur(10px);
-    }
-    .card h2 {
-      font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: rgba(255,255,255,0.45);
-      margin-bottom: 16px; padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .field { margin-bottom: 13px; }
-    .field-label { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 3px; display: block; }
-    .field-hint  { font-size: 0.63rem; color: rgba(255,255,255,0.32); margin-bottom: 6px; display: block; }
-    input[type="number"], input[type="text"] {
-      width: 100%; padding: 11px 14px;
-      background: rgba(255,255,255,0.08);
-      border: 1.5px solid rgba(255,255,255,0.15);
-      border-radius: 10px; color: #fff; font-size: 1rem;
-      transition: border-color 0.2s;
-    }
-    input[type="number"]::placeholder,
-    input[type="text"]::placeholder { color: rgba(255,255,255,0.22); }
-    input[type="number"]:focus,
-    input[type="text"]:focus { outline: none; border-color: #7c6ff7; background: rgba(255,255,255,0.13); }
-    input[type="range"] { width: 100%; accent-color: #7c6ff7; margin-top: 6px; }
-    .slider-header { display: flex; justify-content: space-between; align-items: center; }
-    .slider-val { font-size: 1.1rem; font-weight: 800; color: #a89cf7; }
-    .range-labels { display: flex; justify-content: space-between; font-size: 0.63rem; color: rgba(255,255,255,0.28); margin-top: 3px; }
-
-    .btn {
-      width: 100%; padding: 15px;
-      background: linear-gradient(135deg, #7c6ff7, #4338ca);
-      color: white; border: none; border-radius: 12px;
-      font-size: 1rem; font-weight: 800; letter-spacing: 1px;
-      text-transform: uppercase; cursor: pointer;
-      box-shadow: 0 8px 24px rgba(124,111,247,0.35);
-      transition: opacity 0.2s, transform 0.1s;
-      margin-bottom: 14px;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn.secondary {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: none; font-size: 0.85rem; padding: 12px;
-    }
-    .btn.danger {
-      background: rgba(220,53,69,0.2);
-      border: 1px solid rgba(220,53,69,0.4);
-      box-shadow: none; font-size: 0.8rem; padding: 10px;
-      color: #eb5757;
-    }
-
-    /* Ampel */
-    .ampel {
-      display: flex; align-items: center; gap: 14px;
-      padding: 16px; border-radius: 12px;
-      margin-bottom: 16px; font-weight: 700; font-size: 0.9rem;
-    }
-    .ampel.gruen { background: rgba(40,167,69,0.18); border: 1px solid rgba(40,167,69,0.45); color: #6fcf97; }
-    .ampel.gelb  { background: rgba(255,193,7,0.13); border: 1px solid rgba(255,193,7,0.38); color: #f2c94c; }
-    .ampel.rot   { background: rgba(220,53,69,0.18); border: 1px solid rgba(220,53,69,0.45); color: #eb5757; }
-    .ampel-dot { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 12px currentColor; }
-    .gruen .ampel-dot { background: #28a745; }
-    .gelb  .ampel-dot { background: #ffc107; }
-    .rot   .ampel-dot { background: #dc3545; }
-
-    .result-main {
-      background: rgba(124,111,247,0.15);
-      border: 1.5px solid rgba(124,111,247,0.4);
-      border-radius: 14px; padding: 18px; text-align: center; margin-bottom: 14px;
-    }
-    .result-main .rlabel { font-size: 0.7rem; color: #a89cf7; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
-    .result-main .rval { font-size: 2rem; font-weight: 900; color: #fff; }
-    .result-main .rval.neg { color: #eb5757; }
-    .result-main .rval.pos { color: #6fcf97; }
-
-    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-    .rbox { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; text-align: center; }
-    .rbox .rlabel { font-size: 0.63rem; color: rgba(255,255,255,0.42); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .rbox .rval { font-size: 0.95rem; font-weight: 800; color: #fff; }
-    .rbox .rval.neg  { color: #eb5757; }
-    .rbox .rval.pos  { color: #6fcf97; }
-    .rbox .rval.warn { color: #f2c94c; }
-
-    .erklaerung {
-      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px; padding: 14px; font-size: 0.72rem;
-      color: rgba(255,255,255,0.52); line-height: 1.75;
-    }
-    .erklaerung b { color: rgba(255,255,255,0.85); }
-
-    /* Trade Simulator */
-    .trade-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .trade-result {
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; padding: 14px; margin-top: 12px;
-    }
-    .trade-result .tr-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
-    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .cbox { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; text-align: center; }
-    .cbox .clabel { font-size: 0.6rem; color: rgba(255,255,255,0.38); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .cbox .cval { font-size: 0.9rem; font-weight: 800; }
-    .arrow { text-align: center; font-size: 1.2rem; color: rgba(255,255,255,0.3); padding: 4px 0; }
-
-    /* Szenario */
-    .szenario-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .sbox { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; text-align: center; }
-    .sbox .stitle { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.38); margin-bottom: 6px; }
-    .sbox .sval { font-size: 0.95rem; font-weight: 800; margin-bottom: 4px; }
-    .sbox .sdot { width: 10px; height: 10px; border-radius: 50%; margin: 4px auto 0; }
-    .sdot.gruen { background: #28a745; box-shadow: 0 0 8px #28a745; }
-    .sdot.gelb  { background: #ffc107; box-shadow: 0 0 8px #ffc107; }
-    .sdot.rot   { background: #dc3545; box-shadow: 0 0 8px #dc3545; }
-
-    /* Gespeicherte Werte Badge */
-    .saved-badge {
-      display: inline-block; background: rgba(40,167,69,0.2);
-      border: 1px solid rgba(40,167,69,0.4); border-radius: 20px;
-      padding: 3px 10px; font-size: 0.65rem; color: #6fcf97;
-      margin-left: 8px; vertical-align: middle;
-    }
-
-    .where-box {
-      background: rgba(255,193,7,0.07); border: 1px solid rgba(255,193,7,0.2);
-      border-radius: 10px; padding: 14px; font-size: 0.72rem;
-      color: rgba(255,255,255,0.52); line-height: 1.8;
-    }
-    .where-box b { color: #f2c94c; }
-
-    @media (max-width: 380px) {
-      .result-grid, .trade-row, .compare-grid { grid-template-columns: 1fr; }
-      .szenario-grid { grid-template-columns: 1fr; }
-    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;padding:24px 16px 40px;color:#fff}
+    h1{text-align:center;font-size:1.5rem;font-weight:800;margin-bottom:4px}
+    .subtitle{text-align:center;font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
+    .version-badge{display:block;text-align:center;margin-bottom:22px;font-size:.65rem;color:#a89cf7;letter-spacing:1px}
+    .card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;margin-bottom:14px;backdrop-filter:blur(10px)}
+    .card h2{font-size:.75rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1)}
+    .field{margin-bottom:13px}
+    .field-label{font-size:.8rem;font-weight:600;color:rgba(255,255,255,.85);margin-bottom:3px;display:block}
+    .field-hint{font-size:.63rem;color:rgba(255,255,255,.32);margin-bottom:6px;display:block}
+    input[type=number],input[type=text]{width:100%;padding:11px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:1rem;transition:border-color .2s}
+    input[type=number]::placeholder,input[type=text]::placeholder{color:rgba(255,255,255,.22)}
+    input[type=number]:focus,input[type=text]:focus{outline:none;border-color:#7c6ff7;background:rgba(255,255,255,.13)}
+    input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
+    .slider-header{display:flex;justify-content:space-between;align-items:center}
+    .slider-val{font-size:1.1rem;font-weight:800;color:#a89cf7}
+    .range-labels{display:flex;justify-content:space-between;font-size:.63rem;color:rgba(255,255,255,.28);margin-top:3px}
+    .btn{width:100%;padding:15px;background:linear-gradient(135deg,#7c6ff7,#4338ca);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 24px rgba(124,111,247,.35);transition:opacity .2s,transform .1s;margin-bottom:14px}
+    .btn:active{transform:scale(.98)}
+    .btn.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);box-shadow:none;font-size:.85rem;padding:12px}
+    .btn.danger{background:rgba(220,53,69,.2);border:1px solid rgba(220,53,69,.4);box-shadow:none;font-size:.8rem;padding:10px;color:#eb5757}
+    .ampel{display:flex;align-items:center;gap:14px;padding:16px;border-radius:12px;margin-bottom:16px;font-weight:700;font-size:.9rem}
+    .ampel.gruen{background:rgba(40,167,69,.18);border:1px solid rgba(40,167,69,.45);color:#6fcf97}
+    .ampel.gelb{background:rgba(255,193,7,.13);border:1px solid rgba(255,193,7,.38);color:#f2c94c}
+    .ampel.rot{background:rgba(220,53,69,.18);border:1px solid rgba(220,53,69,.45);color:#eb5757}
+    .ampel-dot{width:26px;height:26px;border-radius:50%;flex-shrink:0;box-shadow:0 0 12px currentColor}
+    .gruen .ampel-dot{background:#28a745}
+    .gelb .ampel-dot{background:#ffc107}
+    .rot .ampel-dot{background:#dc3545}
+    .result-main{background:rgba(124,111,247,.15);border:1.5px solid rgba(124,111,247,.4);border-radius:14px;padding:18px;text-align:center;margin-bottom:14px}
+    .result-main .rlabel{font-size:.7rem;color:#a89cf7;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+    .result-main .rval{font-size:2rem;font-weight:900;color:#fff}
+    .result-main .rval.neg{color:#eb5757}
+    .result-main .rval.pos{color:#6fcf97}
+    .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .rbox{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;text-align:center}
+    .rbox .rlabel{font-size:.63rem;color:rgba(255,255,255,.42);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+    .rbox .rval{font-size:.95rem;font-weight:800;color:#fff}
+    .rbox .rval.neg{color:#eb5757}
+    .rbox .rval.pos{color:#6fcf97}
+    .rbox .rval.warn{color:#f2c94c}
+    .erklaerung{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;font-size:.72rem;color:rgba(255,255,255,.52);line-height:1.75}
+    .erklaerung b{color:rgba(255,255,255,.85)}
+    .trade-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    .trade-result{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;margin-top:12px}
+    .trade-result .tr-title{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);margin-bottom:10px}
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .cbox{background:rgba(255,255,255,.05);border-radius:10px;padding:10px;text-align:center}
+    .cbox .clabel{font-size:.6rem;color:rgba(255,255,255,.38);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .cbox .cval{font-size:.9rem;font-weight:800}
+    .szenario-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+    .sbox{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;text-align:center}
+    .sbox .stitle{font-size:.62rem;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.38);margin-bottom:6px}
+    .sbox .sval{font-size:.95rem;font-weight:800;margin-bottom:4px}
+    .sbox .sdot{width:10px;height:10px;border-radius:50%;margin:4px auto 0}
+    .sdot.gruen{background:#28a745;box-shadow:0 0 8px #28a745}
+    .sdot.gelb{background:#ffc107;box-shadow:0 0 8px #ffc107}
+    .sdot.rot{background:#dc3545;box-shadow:0 0 8px #dc3545}
+    .saved-badge{display:inline-block;background:rgba(40,167,69,.2);border:1px solid rgba(40,167,69,.4);border-radius:20px;padding:3px 10px;font-size:.65rem;color:#6fcf97;margin-left:8px;vertical-align:middle}
+    .where-box{background:rgba(255,193,7,.07);border:1px solid rgba(255,193,7,.2);border-radius:10px;padding:14px;font-size:.72rem;color:rgba(255,255,255,.52);line-height:1.8}
+    .where-box b{color:#f2c94c}
+    @media(max-width:380px){.result-grid,.trade-row,.compare-grid,.szenario-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -166,12 +75,8 @@
 <p class="subtitle">Charles Schwab &middot; Margin-Sicherheitsrechner</p>
 <span class="version-badge">Version 3 &middot; Trade-Simulator &middot; Speicher &middot; Szenarien</span>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  EINGABEN                                   -->
-<!-- ═══════════════════════════════════════════ -->
 <div class="card">
   <h2>Schwab Balance Details <span id="savedBadge" style="display:none" class="saved-badge">Gespeichert</span></h2>
-
   <div class="field">
     <span class="field-label">Net Liquidating Value (Account Value) $</span>
     <span class="field-hint">Accounts → Summary → Total Value</span>
@@ -200,7 +105,6 @@
   <button class="btn danger" onclick="clearSaved()">Gespeicherte Werte löschen</button>
 </div>
 
-<!-- Sicherheitsparameter -->
 <div class="card">
   <h2>Sicherheitsparameter</h2>
   <div class="field">
@@ -209,8 +113,7 @@
       <span class="slider-val" id="stressVal">12%</span>
     </div>
     <span class="field-hint">Simulierter Verlust des Account Value bei Marktrückgang</span>
-    <input type="range" id="stress" min="5" max="30" value="12"
-      oninput="document.getElementById('stressVal').textContent=this.value+'%'; autoSave()" />
+    <input type="range" id="stress" min="5" max="30" value="12" oninput="document.getElementById('stressVal').textContent=this.value+'%';autoSave()" />
     <div class="range-labels"><span>5% gering</span><span>30% extrem</span></div>
   </div>
   <div class="field">
@@ -219,41 +122,34 @@
       <span class="slider-val" id="reserveVal">8%</span>
     </div>
     <span class="field-hint">Fester Puffer auf Basis des Account Value, immer frei halten</span>
-    <input type="range" id="reserve" min="3" max="20" value="8"
-      oninput="document.getElementById('reserveVal').textContent=this.value+'%'; autoSave()" />
+    <input type="range" id="reserve" min="3" max="20" value="8" oninput="document.getElementById('reserveVal').textContent=this.value+'%';autoSave()" />
     <div class="range-labels"><span>3% eng</span><span>20% sehr konservativ</span></div>
   </div>
 </div>
 
 <button class="btn" onclick="rechnen()">Berechnen</button>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  ERGEBNIS                                   -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- ERGEBNIS -->
 <div class="card" id="ergebnis" style="display:none">
   <h2>Ergebnis</h2>
   <div class="ampel" id="ampel"><div class="ampel-dot"></div><span id="ampelText"></span></div>
   <div class="result-main">
     <div class="rlabel">Maximal nutzbare Option Buying Power</div>
-    <div class="rval" id="maxNutzbar">—</div>
+    <div class="rval" id="maxNutzbar">-</div>
   </div>
   <div class="result-grid">
-    <div class="rbox"><div class="rlabel">Freie Reserve</div><div class="rval" id="freieReserve">—</div></div>
-    <div class="rbox"><div class="rlabel">Abstand Margin Call</div><div class="rval" id="abstand">—</div></div>
-    <div class="rbox"><div class="rlabel">Stressverlust</div><div class="rval" id="stressOut">—</div></div>
-    <div class="rbox"><div class="rlabel">Equity Check</div><div class="rval" id="equityCheck">—</div></div>
+    <div class="rbox"><div class="rlabel">Freie Reserve</div><div class="rval" id="freieReserve">-</div></div>
+    <div class="rbox"><div class="rlabel">Abstand Margin Call</div><div class="rval" id="abstand">-</div></div>
+    <div class="rbox"><div class="rlabel">Stressverlust</div><div class="rval" id="stressOut">-</div></div>
+    <div class="rbox"><div class="rlabel">Equity Check</div><div class="rval" id="equityCheck">-</div></div>
   </div>
   <div class="erklaerung" id="erklaerung"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  TRADE SIMULATOR                            -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- TRADE SIMULATOR -->
 <div class="card" id="tradeCard" style="display:none">
   <h2>Trade-Simulator</h2>
-  <p style="font-size:0.75rem; color:rgba(255,255,255,0.45); margin-bottom:14px;">
-    Gib einen geplanten Trade ein und sieh sofort, wie sich die Ampel verändert.
-  </p>
+  <p style="font-size:.75rem;color:rgba(255,255,255,.45);margin-bottom:14px">Geplanten Trade eingeben — sieh sofort wie sich die Ampel verändert.</p>
   <div class="trade-row">
     <div class="field">
       <span class="field-label">Ticker / Beschreibung</span>
@@ -266,39 +162,24 @@
   </div>
   <button class="btn secondary" onclick="simTrade()">Trade simulieren</button>
   <div class="trade-result" id="tradeResult" style="display:none">
-    <div class="tr-title">Vorher → Nachher</div>
+    <div class="tr-title">Vorher vs. Nachher</div>
     <div class="compare-grid">
-      <div class="cbox">
-        <div class="clabel">OBP vorher</div>
-        <div class="cval" id="trVorher">—</div>
-      </div>
-      <div class="cbox">
-        <div class="clabel">OBP nachher</div>
-        <div class="cval" id="trNachher">—</div>
-      </div>
-      <div class="cbox" style="grid-column:1/-1">
-        <div class="clabel">Ampel nach Trade</div>
-        <div class="cval" id="trAmpel">—</div>
-      </div>
+      <div class="cbox"><div class="clabel">OBP vorher</div><div class="cval" id="trVorher">-</div></div>
+      <div class="cbox"><div class="clabel">OBP nachher</div><div class="cval" id="trNachher">-</div></div>
+      <div class="cbox" style="grid-column:1/-1"><div class="clabel">Ampel nach Trade</div><div class="cval" id="trAmpel">-</div></div>
     </div>
-    <div style="margin-top:10px; font-size:0.72rem; color:rgba(255,255,255,0.45)" id="trHinweis"></div>
+    <div style="margin-top:10px;font-size:.72rem;color:rgba(255,255,255,.45)" id="trHinweis"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  SZENARIOVERGLEICH                          -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- SZENARIOVERGLEICH -->
 <div class="card" id="szenarioCard" style="display:none">
   <h2>Szenariovergleich</h2>
-  <p style="font-size:0.75rem; color:rgba(255,255,255,0.45); margin-bottom:4px;">
-    Was passiert bei unterschiedlichen Markteinbrüchen?
-  </p>
+  <p style="font-size:.75rem;color:rgba(255,255,255,.45);margin-bottom:4px">Was passiert bei unterschiedlichen Markteinbrüchen?</p>
   <div class="szenario-grid" id="szenarioGrid"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  WO FINDE ICH DIE WERTE                    -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- WO FINDE ICH DIE WERTE -->
 <div class="card">
   <h2>Wo finde ich diese Werte?</h2>
   <div class="where-box">
@@ -306,21 +187,77 @@
     <b>Margin Equity:</b> Balances → Balance Details → rechte Spalte → Margin Details &amp; Buying Power<br/>
     <b>Equity Percent:</b> Direkt darunter in der gleichen Spalte<br/>
     <b>Maintenance Req.:</b> thinkorswim → Monitor → Account Statement → Margin Requirements<br/>
-    <b>Short Options BP:</b> Balances → Link „Margin Buying Power" → Options → Short Options
+    <b>Short Options BP:</b> Balances → Link &bdquo;Margin Buying Power&ldquo; → Options → Short Options
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  JAVASCRIPT                                 -->
-<!-- ═══════════════════════════════════════════ -->
 <script>
-  // ── Hilfsfunktionen ──────────────────────────
-  function fmt(n) {
-    return (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString('en-US');
+  // ── Kern-Berechnung ───────────────────────────────────────
+  function fmt(n){
+    return (n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString('en-US');
   }
-  function ampelKlasseFor(nutzbarPct, equityKritisch, maxNutzbar, abstandVal, stressVerlust) {
-    if (maxNutzbar <= 0 || equityKritisch) return 'rot';
-    if (nutzbarPct < 0.25 || (abstandVal !== null && abstandVal < stressVerlust * 1.2)) return 'gelb';
-    return 'gruen';
+
+  function berechneKern(nlv, mEq, ePct, mainReq, shortOBP, stressPct, resPct){
+    var stressV   = nlv * stressPct;
+    var minRes    = nlv * resPct;
+    var zusatz    = mainReq > 0 ? mainReq * 0.10 : nlv * 0.05;
+    var freiRes   = stressV + minRes + zusatz;
+    var maxNutz   = shortOBP - freiRes;
+    var abstandV  = (mainReq > 0 && mEq > 0) ? mEq - mainReq : null;
+    var nutzPct   = shortOBP > 0 ? maxNutz / shortOBP : 0;
+    var eqKrit    = ePct > 0 && ePct < 35;
+    var klasse;
+    if(maxNutz <= 0 || eqKrit) klasse = 'rot';
+    else if(nutzPct < 0.25 || (abstandV !== null && abstandV < stressV * 1.2)) klasse = 'gelb';
+    else klasse = 'gruen';
+    return {stressV:stressV, minRes:minRes, zusatz:zusatz, freiRes:freiRes,
+            maxNutz:maxNutz, abstandV:abstandV, nutzPct:nutzPct, klasse:klasse};
   }
-  function ampelEmoji(k) { return k
+
+  // ── Gespeicherte Felder ────────────────────────────────────
+  var FELDER = ['nlv','marginEquity','equityPct','mainReq','shortOBP','stress','reserve'];
+
+  function autoSave(){
+    var d={};
+    FELDER.forEach(function(id){ d[id]=document.getElementById(id).value; });
+    localStorage.setItem('obp_v3', JSON.stringify(d));
+    document.getElementById('savedBadge').style.display='inline-block';
+  }
+
+  function loadSaved(){
+    var raw=localStorage.getItem('obp_v3');
+    if(!raw) return;
+    var d=JSON.parse(raw);
+    FELDER.forEach(function(id){
+      if(d[id] !== undefined){
+        var el=document.getElementById(id);
+        el.value=d[id];
+      }
+    });
+    var sv=document.getElementById('stress').value;
+    var rv=document.getElementById('reserve').value;
+    document.getElementById('stressVal').textContent=sv+'%';
+    document.getElementById('reserveVal').textContent=rv+'%';
+    document.getElementById('savedBadge').style.display='inline-block';
+  }
+
+  function clearSaved(){
+    localStorage.removeItem('obp_v3');
+    FELDER.forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('stressVal').textContent='12%';
+    document.getElementById('reserveVal').textContent='8%';
+    document.getElementById('stress').value=12;
+    document.getElementById('reserve').value=8;
+    document.getElementById('savedBadge').style.display='none';
+    document.getElementById('ergebnis').style.display='none';
+    document.getElementById('tradeCard').style.display='none';
+    document.getElementById('szenarioCard').style.display='none';
+  }
+
+  // ── Hauptberechnung ────────────────────────────────────────
+  function rechnen(){
+    var nlv      = parseFloat(document.getElementById('nlv').value)||0;
+    var mEq      = parseFloat(document.getElementById('marginEquity').value)||0;
+    var ePct     = parseFloat(document.getElementById('equityPct').value)||0;
+    var mainReq  = parseFloat(document.getElementById('mainReq').value)||0;
+    var shortOBP = parseFloat(document.getElementById('short
