@@ -28,3 +28,12 @@ Geprüft am 09.11.2026:
 ## Tests
 
 Mit Node.js: `node tests/risk.test.cjs` (keine Installation erforderlich). Prüft ATM/ITM/OTM, beide Margin-Untergrenzen, mehrere Positionen, −20-%-Verlust, House-Aufschlag, Nullpositionen und unveränderte 0-%-Bewertung. Die Seitenskripte werden zusätzlich mit einem kleinen DOM-Testdouble ausgeführt: Reserveformel, Buying Power null, Auslastung, fester −20-%-Fall, fehlende Eingaben und Löschen. Zusätzlich am 09.11.2026 im echten Browser geprüft: Desktop und 390 × 844 px Handyansicht, Position hinzufügen, Berechnen, Wiederherstellung nach Neuladen, alle Werte löschen und erneutes Neuladen, seitliches Scrollen der Szenariotabelle. Die Seite bleibt bei 390 px innerhalb der Bildschirmbreite. Berechnen führt nun direkt zu den neuen Risikowerten. Ein Abgleich mit echten Schwab-Trade-Tickets steht weiterhin aus.
+
+
+## ToS: Total Nominal Exposure (Version 3.1)
+
+Die bereitgestellte benutzerdefinierte Studie CashFlowMarginBar verwendet `totalNominalExposure / netLiq`, definiert aber keine eindeutige Positionsaggregation. Der neue Abschnitt unter der Kontoberechnung legt deshalb eine explizite Brutto-Konvention offen: Aktien-Nominal (Summe absoluter Marktwerte) + Short-Put-Strike-Nominal (Strike × Kontrakte × 100) + weiteres vom Nutzer bestimmtes positives Nominal. Für weitere Standard-Aktienoptionen wird Strike × Kontrakte × 100 genannt. Kein Cash, keine Prämien, keine Ableitung aus NLV, Margin Equity oder Buying Power. Keine Delta-Gewichtung oder Verrechnung von Hedges/Spread-Beinen; Covered Calls können dadurch zusätzlich zu den Aktien zählen. Die Kennzahl ist kein tatsächliches Risikomaß. Der Nutzer muss die Summen vollständig und konsistent erfassen.
+
+Alle drei Kategorien müssen explizit ausgefüllt sein (0 erlaubt). Ungültige/fehlende/negative Werte unterdrücken die Ausgabe. Das ToS-Feld enthält einen reinen Zahlenwert ohne Währungszeichen oder Gruppierung; Nominal / NLV wird nur für NLV > 0 angezeigt. Die drei Summen werden separat im lokalen Speicher gehalten und über die vorhandene Löschfunktion entfernt. Bestehende Kontowerte bleiben erhalten.
+
+Zusatztests: Aggregation, ToS-Zahlenformat, Verhältnis, explizite Nullwerte, fehlende/negative Werte, NLV 0, Wiederherstellung und Löschen. Im echten Browser mit synthetischen Nominal-Beispielsummen sowie 390-px-Handyansicht geprüft; keine Übertragung privater Kontowerte ins Repository.

@@ -55,5 +55,15 @@ context.document.querySelectorAll=()=>[{querySelectorAll:()=>[1,2,3,4].map(()=>(
 els.volFactor.value='2';assert.equal(context.renderRisk(),true); // completely empty rows are ignored
 context.document.querySelectorAll=()=>[];
 els.volFactor.value='2';els.stockValue.value='';assert.equal(context.renderRisk(),true);assert.ok(els.riskResult.children.some(e=>e.textContent.includes('Long-Aktienmarktwert eingeben')));
-context.clearAll();assert.equal(els.nlv.value,'');assert.equal(els.result.style.display,'none');assert.equal(storage.size,0);
+// ToS aggregate is independent of account buying power and optional put scenarios.
+context.renderExposure();assert.equal(els.tosNominal.value,'');
+Object.entries({nominalStock:300000,nominalPuts:600000,nominalOther:145674}).forEach(([id,v])=>els[id].value=String(v));
+context.saveExposure();assert.equal(els.tosNominal.value,'1045674');assert.equal(els.totalNominal.textContent,'$1,045,674');
+assert.match(els.nominalLeverage.textContent,/10.46x/);
+Object.keys({nominalStock:0,nominalPuts:0,nominalOther:0}).forEach(id=>els[id].value='');context.loadExposure();assert.equal(els.tosNominal.value,'1045674');
+els.nlv.value='0';context.renderExposure();assert.match(els.nominalLeverage.textContent,/k.A./);assert.equal(els.tosNominal.value,'1045674');
+els.nominalOther.value='-1';context.renderExposure();assert.equal(els.tosNominal.value,'');
+els.nominalOther.value='';context.renderExposure();assert.equal(els.tosNominal.value,'');
+['nominalStock','nominalPuts','nominalOther'].forEach(id=>els[id].value='0');context.renderExposure();assert.equal(els.tosNominal.value,'0');
+context.clearAll();assert.equal(els.tosNominal.value,'');assert.equal(els.nlv.value,'');assert.equal(els.result.style.display,'none');assert.equal(storage.size,0);
 console.log('All calculation and page integration assertions passed.');
