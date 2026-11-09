@@ -72,18 +72,7 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 <div class="field"><div class="sh"><span class="fl">Mindestreserve</span><span class="sv" id="rv">8%</span></div><span class="fh">Fester Puffer, immer frei halten</span><input type="range" id="res" min="3" max="20" value="8" oninput="document.getElementById('rv').textContent=this.value+'%';save()"/><div class="rl"><span>3% eng</span><span>20% konservativ</span></div></div>
 </div>
 
-<div class="card">
-<h2>Short-Put-Risiken</h2>
-<p class="erk">Nur ungedeckte, physisch gelieferte Standard-Aktienputs in USD (100 Aktien je Kontrakt), Reg-T. Keine Indizes, gehebelten Produkte, Spreads, Portfolio Margin oder angepassten Kontrakte. Alle offenen Short Puts dieses Kontos erfassen; keine Ableitung aus Buying Power.</p>
-<div id="positions"></div><button type="button" class="btnd" style="background:#4338ca;color:#fff;border-color:#7c6ff7" onclick="addPut();saveRisk()">Position hinzufügen</button>
-<label class="fl" for="stockValue">Aktueller Marktwert sonstiger Long-Aktien ($)</label><span class="fh">Ohne Put-Underlying-Nominal; angenommene Kursreaktion 1:1 zum Markt.</span><input type="number" id="stockValue" min="0" oninput="saveRisk()"/>
-<label class="fl" for="volFactor">Zeitwert-Faktor im Stress (Annahme, mindestens 1)</label><input type="number" id="volFactor" min="1" step="0.1" value="2" oninput="saveRisk()"/>
-<label class="fl" for="houseFactor">Faktor für geschätzte Put-Margin (House-Aufschlag, mindestens 1)</label><input type="number" id="houseFactor" min="1" step="0.1" value="1" oninput="saveRisk()"/>
-<p class="erk">Berechenbar aus Eingaben: Nominal = Σ Strike × 100 × Kontrakte; Aktienübernahme = Σ 100 × Kontrakte, voller Brutto-Kaufpreis bei Zuteilung aller Puts = Nominal. Prämien und Buying Power reduzieren diese Zahlungspflicht nicht. Vorzeitige Zuteilung ist möglich; ITM ist keine Zuteilungsprognose.</p>
-<p class="erk">Quellen (geprüft 09.11.2026): <a href="https://www.schwab.com/margin/margin-rates-and-requirements" style="color:#c9c2ff">Schwab-Anforderungen</a>. Basis je Kontrakt: max[100 × (20 % × Kurs − max(Kurs − Strike, 0) + Put-Mark), 100 × (10 % × Strike + Put-Mark), $100]. Konto-Mindestequity und Sonderanforderungen sind zusätzlich zu prüfen. Ergänzend: <a href="https://www.metistrades.com/blog/guides/guide-margin-and-ltv" style="color:#c9c2ff">MetisTrades zu LTV</a>; LTV ist eine andere Kennzahl als Maintenance / Margin Equity.</p><div id="riskResult" aria-live="polite"></div>
-</div>
-<button class="btn" onclick="calc()">Berechnen</button>
-
+<button class="btn" onclick="calc()">Kontowerte berechnen</button>
 <div class="card" id="result" style="display:none">
 <h2>Ergebnis</h2>
 <div class="ampel" id="amp"><div class="dot"></div><span id="amptxt"></span></div>
@@ -96,6 +85,20 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 </div>
 <div class="erk" id="erkl"></div><p class="erk">Diese Reserve-Faustregel ist keine Schwab-Marginberechnung und keine Empfehlung für neue Positionen. Equity-Percent-Farben sind frei gewählte Warnschwellen.</p>
 </div>
+
+<div class="card">
+<h2>Optional: Short-Put-Risiken</h2>
+<div class="erk"><b>Was bringt mir das?</b> Die Kontowerte zeigen nicht, wie viel Geld du bei Zuteilung deiner Puts für Aktien zahlen müsstest. Hier siehst du diese Kaufverpflichtung und eine Schätzung, wie Kursrückgänge (auch −20 %) Verluste und Margin verändern könnten.<br/><br/><b>So füllst du es aus:</b> Für jede offene Short-Put-Position eine Zeile hinzufügen. Anzahl der verkauften Kontrakte, Ausübungspreis (Strike), heutigen Aktienkurs und heutigen Optionskurs (Mark) eintragen. Beispiel: 1 Kontrakt, Strike $200, Aktienkurs $210, Put-Mark $1 bedeutet eine mögliche Aktienübernahme für $20.000. Der Mark ist ein Kurs je Aktie; bei $1 entspricht der aktuelle Rückkaufwert $100 je Kontrakt.<br/><br/>Für dein gesamtes Put-Exposure alle offenen Short Puts desselben Kontos erfassen. Dieser Abschnitt ist für die Kontoberechnung oben nicht erforderlich.</div>
+<p class="erk">Nur ungedeckte, physisch gelieferte Standard-Aktienputs in USD (100 Aktien je Kontrakt), Reg-T. Keine Indizes, gehebelten Produkte, Spreads, Portfolio Margin oder angepassten Kontrakte. Alle offenen Short Puts dieses Kontos erfassen; keine Ableitung aus Buying Power.</p>
+<div id="positions"></div><button type="button" class="btnd" style="background:#4338ca;color:#fff;border-color:#7c6ff7" onclick="addPut();saveRisk()">Position hinzufügen</button>
+<label class="fl" for="stockValue">Gesamtwert deiner bereits gehaltenen Aktien ($)</label><span class="fh">Dollar-Marktwert aller bereits gehaltenen Aktien, nicht deren Anzahl. Nicht NLV, Cash oder das Nominal der Puts. Beispiel: 100 Aktien zu $50 = $5.000. Nur bei keinem Aktienbestand 0 eintragen.</span><input type="number" id="stockValue" min="0" oninput="saveRisk()"/>
+<details><summary>Erweiterte Szenarioannahmen (Vorgaben können bleiben)</summary><p class="erk">Zeitwert-Faktor 2: heutiger Zeitwert wird im Stress verdoppelt. House-Faktor 1: kein zusätzlicher Margin-Aufschlag. Beides sind Modellannahmen, keine Vorhersagen.</p><label class="fl" for="volFactor">Zeitwert-Faktor im Stress (Annahme, mindestens 1)</label><input type="number" id="volFactor" min="1" step="0.1" value="2" oninput="saveRisk()"/>
+<label class="fl" for="houseFactor">Faktor für geschätzte Put-Margin (House-Aufschlag, mindestens 1)</label><input type="number" id="houseFactor" min="1" step="0.1" value="1" oninput="saveRisk()"/>
+</details><p class="erk">Berechenbar aus Eingaben: Nominal = Σ Strike × 100 × Kontrakte; Aktienübernahme = Σ 100 × Kontrakte, voller Brutto-Kaufpreis bei Zuteilung aller Puts = Nominal. Prämien und Buying Power reduzieren diese Zahlungspflicht nicht. Vorzeitige Zuteilung ist möglich; ITM ist keine Zuteilungsprognose.</p>
+<p class="erk">Quellen (geprüft 09.11.2026): <a href="https://www.schwab.com/margin/margin-rates-and-requirements" style="color:#c9c2ff">Schwab-Anforderungen</a>. Basis je Kontrakt: max[100 × (20 % × Kurs − max(Kurs − Strike, 0) + Put-Mark), 100 × (10 % × Strike + Put-Mark), $100]. Konto-Mindestequity und Sonderanforderungen sind zusätzlich zu prüfen. Ergänzend: <a href="https://www.metistrades.com/blog/guides/guide-margin-and-ltv" style="color:#c9c2ff">MetisTrades zu LTV</a>; LTV ist eine andere Kennzahl als Maintenance / Margin Equity.</p><div id="riskResult" aria-live="polite"></div>
+</div>
+<button class="btn" onclick="renderRisk()">Put-Risiken berechnen</button>
+
 
 <div class="card">
 <h2>Wo finde ich diese Werte?</h2>
@@ -111,6 +114,7 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 <script>
 function fmt(n){return(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString('en-US');}
 function save(){
+document.getElementById('result').style.display='none';document.getElementById('riskResult').replaceChildren();
 var d={nlv:document.getElementById('nlv').value,meq:document.getElementById('meq').value,epc:document.getElementById('epc').value,mreq:document.getElementById('mreq').value,sobp:document.getElementById('sobp').value,str:document.getElementById('str').value,res:document.getElementById('res').value};
 try{localStorage.setItem('obp25',JSON.stringify(d));}catch(e){return;}
 document.getElementById('sbadge').style.display='inline-block';
@@ -133,7 +137,7 @@ document.getElementById('sbadge').style.display='none';
 document.getElementById('result').style.display='none';
 }
 function calc(){
-if(!renderRisk())return;
+
 var nlv=parseFloat(document.getElementById('nlv').value)||0;
 var meq=parseFloat(document.getElementById('meq').value)||0;
 var epc=parseFloat(document.getElementById('epc').value)||0;
@@ -172,10 +176,10 @@ else{ee.textContent='Kritisch ('+epc+'%)';ee.className='rv2 neg';}
 var txt='<b>Rechenweg:</b><br/>'+'Stressverlust ('+Math.round(sp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(sv)+'</b><br/>'+'Mindestreserve ('+Math.round(rp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(mr)+'</b><br/>'+'Zusatzpuffer (10% Maintenance; sonst 5% NLV): <b>'+fmt(zp)+'</b><br/>'+'Empfohlene freie Reserve: <b>'+fmt(fr)+'</b><br/><br/>'+'Short Options BP: <b>'+fmt(sobp)+'</b> minus freie Reserve: <b>'+fmt(fr)+'</b><br/>'+'= Maximal nutzbar: <b>'+fmt(mx)+'</b>';
 document.getElementById('erkl').innerHTML=txt;
 document.getElementById('result').style.display='block';
-document.getElementById('riskResult').scrollIntoView({behavior:'smooth'});
+document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
 try{loadSaved();}catch(e){document.getElementById("sbadge").textContent="Speicher nicht verfügbar";}
 </script>
-<script src="risk.js?v=3.0.1"></script>
+<script src="risk.js?v=3.0.2"></script>
 </body>
 </html>

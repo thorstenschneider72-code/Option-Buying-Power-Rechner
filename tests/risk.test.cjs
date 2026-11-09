@@ -31,7 +31,7 @@ context.window=context;
 vm.createContext(context);vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],context);vm.runInContext(fs.readFileSync(require.resolve('../risk.js'),'utf8'),context);
 Object.entries({nlv:100000,meq:80000,mreq:20000,sobp:0,epc:100,str:12,res:8,stockValue:50000,volFactor:2,houseFactor:1}).forEach(([id,v])=>els[id].value=String(v));
 context.calc();assert.equal(els.result.style.display,'block');assert.equal(els.maxv.textContent,'-$22,000');
-assert.match(els.riskResult.children[0].textContent,/25.0 %/);
+context.renderRisk();assert.match(els.riskResult.children[0].textContent,/25.0 %/);
 const table=els.riskResult.children.find(e=>e.children[0]?.children?.length===6)?.children[0];
 assert.ok(table,'scenario table');assert.equal(table.children.length,6); // header + 0,10,12,20,30
 assert.ok(table.children.some(row=>row.children[0].textContent==='−20 %'));
@@ -49,6 +49,11 @@ assert.equal(scenarios.children[1].children[3].textContent,'k.A.');
 context.saveRisk();assert.ok(storage.get('obpRisk1').includes('"qty":2'));
 context.document.querySelectorAll=()=>[];
 els.volFactor.value='0';assert.equal(context.renderRisk(),false);
+context.calc();assert.equal(els.result.style.display,'block'); // optional invalid inputs cannot block account calculation
+context.save();assert.equal(els.result.style.display,'none'); // stale account result is hidden
+context.document.querySelectorAll=()=>[{querySelectorAll:()=>[1,2,3,4].map(()=>({value:''}))}];
+els.volFactor.value='2';assert.equal(context.renderRisk(),true); // completely empty rows are ignored
+context.document.querySelectorAll=()=>[];
 els.volFactor.value='2';els.stockValue.value='';assert.equal(context.renderRisk(),true);assert.ok(els.riskResult.children.some(e=>e.textContent.includes('Long-Aktienmarktwert eingeben')));
 context.clearAll();assert.equal(els.nlv.value,'');assert.equal(els.result.style.display,'none');assert.equal(storage.size,0);
 console.log('All calculation and page integration assertions passed.');
