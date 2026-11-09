@@ -53,8 +53,8 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 </head>
 <body>
 <h1>Option Buying Power</h1>
-<p class="sub">Charles Schwab &middot; Margin-Sicherheitsrechner</p>
-<span class="badge">Version 2.5 &middot; Auto-Speicher</span>
+<p class="sub">Charles Schwab &middot; Margin- und Szenariorechner</p>
+<span class="badge">Version 3.0 &middot; Auto-Speicher</span>
 
 <div class="card">
 <h2>Schwab Balance Details <span id="sbadge" class="saved" style="display:none">Gespeichert</span></h2>
@@ -68,24 +68,37 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 
 <div class="card">
 <h2>Sicherheitsparameter</h2>
-<div class="field"><div class="sh"><span class="fl">Marktstress-Abschlag</span><span class="sv" id="sv">12%</span></div><span class="fh">Simulierter Verlust bei Marktr&uuml;ckgang</span><input type="range" id="str" min="5" max="30" value="12" oninput="document.getElementById('sv').textContent=this.value+'%';save()"/><div class="rl"><span>5% gering</span><span>30% extrem</span></div></div>
+<div class="field"><div class="sh"><span class="fl">Marktstress-Abschlag</span><span class="sv" id="sv">12%</span></div><span class="fh">Pauschaler NLV-Abschlag für die Reserve-Faustregel; kein Portfolioverlustmodell</span><input type="range" id="str" min="5" max="30" value="12" oninput="document.getElementById('sv').textContent=this.value+'%';save()"/><div class="rl"><span>5% gering</span><span>30% extrem</span></div></div>
 <div class="field"><div class="sh"><span class="fl">Mindestreserve</span><span class="sv" id="rv">8%</span></div><span class="fh">Fester Puffer, immer frei halten</span><input type="range" id="res" min="3" max="20" value="8" oninput="document.getElementById('rv').textContent=this.value+'%';save()"/><div class="rl"><span>3% eng</span><span>20% konservativ</span></div></div>
 </div>
 
-<button class="btn" onclick="calc()">Berechnen</button>
-
+<button class="btn" onclick="calc()">Kontowerte berechnen</button>
 <div class="card" id="result" style="display:none">
 <h2>Ergebnis</h2>
 <div class="ampel" id="amp"><div class="dot"></div><span id="amptxt"></span></div>
-<div class="rm"><div class="rl2">Maximal nutzbare Option Buying Power</div><div class="rv" id="maxv">-</div></div>
+<div class="rm"><div class="rl2">Buying Power nach pauschaler Reserve (Faustregel)</div><div class="rv" id="maxv">-</div></div>
 <div class="rg">
 <div class="rb"><div class="rl3">Freie Reserve</div><div class="rv2" id="fres">-</div></div>
-<div class="rb"><div class="rl3">Abstand Margin Call</div><div class="rv2" id="abst">-</div></div>
-<div class="rb"><div class="rl3">Stressverlust</div><div class="rv2" id="strv">-</div></div>
+<div class="rb"><div class="rl3">Equity minus Maintenance (Momentaufnahme)</div><div class="rv2" id="abst">-</div></div>
+<div class="rb"><div class="rl3">Pauschaler Stressabschlag</div><div class="rv2" id="strv">-</div></div>
 <div class="rb"><div class="rl3">Equity Check</div><div class="rv2" id="eqck">-</div></div>
 </div>
-<div class="erk" id="erkl"></div>
+<div class="erk" id="erkl"></div><p class="erk">Diese Reserve-Faustregel ist keine Schwab-Marginberechnung und keine Empfehlung für neue Positionen. Equity-Percent-Farben sind frei gewählte Warnschwellen.</p>
 </div>
+
+<div class="card">
+<h2>Optional: Short-Put-Risiken</h2>
+<div class="erk"><b>Was bringt mir das?</b> Die Kontowerte zeigen nicht, wie viel Geld du bei Zuteilung deiner Puts für Aktien zahlen müsstest. Hier siehst du diese Kaufverpflichtung und eine Schätzung, wie Kursrückgänge (auch −20 %) Verluste und Margin verändern könnten.<br/><br/><b>So füllst du es aus:</b> Für jede offene Short-Put-Position eine Zeile hinzufügen. Anzahl der verkauften Kontrakte, Ausübungspreis (Strike), heutigen Aktienkurs und heutigen Optionskurs (Mark) eintragen. Beispiel: 1 Kontrakt, Strike $200, Aktienkurs $210, Put-Mark $1 bedeutet eine mögliche Aktienübernahme für $20.000. Der Mark ist ein Kurs je Aktie; bei $1 entspricht der aktuelle Rückkaufwert $100 je Kontrakt.<br/><br/>Für dein gesamtes Put-Exposure alle offenen Short Puts desselben Kontos erfassen. Dieser Abschnitt ist für die Kontoberechnung oben nicht erforderlich.</div>
+<p class="erk">Nur ungedeckte, physisch gelieferte Standard-Aktienputs in USD (100 Aktien je Kontrakt), Reg-T. Keine Indizes, gehebelten Produkte, Spreads, Portfolio Margin oder angepassten Kontrakte. Alle offenen Short Puts dieses Kontos erfassen; keine Ableitung aus Buying Power.</p>
+<div id="positions"></div><button type="button" class="btnd" style="background:#4338ca;color:#fff;border-color:#7c6ff7" onclick="addPut();saveRisk()">Position hinzufügen</button>
+<label class="fl" for="stockValue">Gesamtwert deiner bereits gehaltenen Aktien ($)</label><span class="fh">Dollar-Marktwert aller bereits gehaltenen Aktien, nicht deren Anzahl. Nicht NLV, Cash oder das Nominal der Puts. Beispiel: 100 Aktien zu $50 = $5.000. Nur bei keinem Aktienbestand 0 eintragen.</span><input type="number" id="stockValue" min="0" oninput="saveRisk()"/>
+<details><summary>Erweiterte Szenarioannahmen (Vorgaben können bleiben)</summary><p class="erk">Zeitwert-Faktor 2: heutiger Zeitwert wird im Stress verdoppelt. House-Faktor 1: kein zusätzlicher Margin-Aufschlag. Beides sind Modellannahmen, keine Vorhersagen.</p><label class="fl" for="volFactor">Zeitwert-Faktor im Stress (Annahme, mindestens 1)</label><input type="number" id="volFactor" min="1" step="0.1" value="2" oninput="saveRisk()"/>
+<label class="fl" for="houseFactor">Faktor für geschätzte Put-Margin (House-Aufschlag, mindestens 1)</label><input type="number" id="houseFactor" min="1" step="0.1" value="1" oninput="saveRisk()"/>
+</details><p class="erk">Berechenbar aus Eingaben: Nominal = Σ Strike × 100 × Kontrakte; Aktienübernahme = Σ 100 × Kontrakte, voller Brutto-Kaufpreis bei Zuteilung aller Puts = Nominal. Prämien und Buying Power reduzieren diese Zahlungspflicht nicht. Vorzeitige Zuteilung ist möglich; ITM ist keine Zuteilungsprognose.</p>
+<p class="erk">Quellen (geprüft 09.11.2026): <a href="https://www.schwab.com/margin/margin-rates-and-requirements" style="color:#c9c2ff">Schwab-Anforderungen</a>. Basis je Kontrakt: max[100 × (20 % × Kurs − max(Kurs − Strike, 0) + Put-Mark), 100 × (10 % × Strike + Put-Mark), $100]. Konto-Mindestequity und Sonderanforderungen sind zusätzlich zu prüfen. Ergänzend: <a href="https://www.metistrades.com/blog/guides/guide-margin-and-ltv" style="color:#c9c2ff">MetisTrades zu LTV</a>; LTV ist eine andere Kennzahl als Maintenance / Margin Equity.</p><div id="riskResult" aria-live="polite"></div>
+</div>
+<button class="btn" onclick="renderRisk()">Put-Risiken berechnen</button>
+
 
 <div class="card">
 <h2>Wo finde ich diese Werte?</h2>
@@ -101,8 +114,9 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 <script>
 function fmt(n){return(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString('en-US');}
 function save(){
+document.getElementById('result').style.display='none';document.getElementById('riskResult').replaceChildren();
 var d={nlv:document.getElementById('nlv').value,meq:document.getElementById('meq').value,epc:document.getElementById('epc').value,mreq:document.getElementById('mreq').value,sobp:document.getElementById('sobp').value,str:document.getElementById('str').value,res:document.getElementById('res').value};
-localStorage.setItem('obp25',JSON.stringify(d));
+try{localStorage.setItem('obp25',JSON.stringify(d));}catch(e){return;}
 document.getElementById('sbadge').style.display='inline-block';
 }
 function loadSaved(){
@@ -114,7 +128,8 @@ if(d.res){document.getElementById('res').value=d.res;document.getElementById('rv
 document.getElementById('sbadge').style.display='inline-block';
 }
 function clearAll(){
-localStorage.removeItem('obp25');
+try{localStorage.removeItem("obpRisk1");}catch(e){}document.getElementById("positions").replaceChildren();document.getElementById("stockValue").value="";document.getElementById("volFactor").value=2;document.getElementById("houseFactor").value=1;document.getElementById("riskResult").replaceChildren();
+try{localStorage.removeItem('obp25');}catch(e){}
 ['nlv','meq','epc','mreq','sobp'].forEach(function(k){document.getElementById(k).value='';});
 document.getElementById('str').value=12;document.getElementById('sv').textContent='12%';
 document.getElementById('res').value=8;document.getElementById('rv').textContent='8%';
@@ -122,6 +137,7 @@ document.getElementById('sbadge').style.display='none';
 document.getElementById('result').style.display='none';
 }
 function calc(){
+
 var nlv=parseFloat(document.getElementById('nlv').value)||0;
 var meq=parseFloat(document.getElementById('meq').value)||0;
 var epc=parseFloat(document.getElementById('epc').value)||0;
@@ -129,7 +145,7 @@ var mreq=parseFloat(document.getElementById('mreq').value)||0;
 var sobp=parseFloat(document.getElementById('sobp').value)||0;
 var sp=parseFloat(document.getElementById('str').value)/100;
 var rp=parseFloat(document.getElementById('res').value)/100;
-if(!nlv||!sobp){alert('Bitte mindestens NLV und Short Options BP eintragen.');return;}
+if(!['nlv','meq','epc','mreq','sobp'].every(function(k){var v=document.getElementById(k).value;return v===''||Number.isFinite(Number(v))&&Number(v)>=0;})||nlv<=0||document.getElementById('sobp').value===''||epc>100){alert('Bitte NLV > 0 und Short Options BP ≥ 0 sowie gültige, nicht negative Kontowerte eingeben (Equity Percent 0–100).');return;}
 var sv=nlv*sp;
 var mr=nlv*rp;
 var zp=mreq>0?mreq*0.10:nlv*0.05;
@@ -142,7 +158,7 @@ var kl;
 if(mx<=0||ek)kl='rot';
 else if(np<0.25||(ab!==null&&ab<sv*1.2))kl='gelb';
 else kl='gruen';
-var msg={gruen:'SICHER - Ausreichend Puffer. Neue Positionen moeglich.',gelb:'VORSICHT - Puffer eng. Nur selektiv neue Positionen.',rot:'KRITISCH - Kein Spielraum. Keine neuen Short-Positionen!'};
+var msg={gruen:'Reserve-Faustregel: positiver Puffer. Keine Handelsfreigabe.',gelb:'Reserve-Faustregel: enger Puffer.',rot:'Reserve-Faustregel: Puffer aufgebraucht oder Equity-Warnschwelle.'};
 var el=document.getElementById('amp');
 el.className='ampel '+kl;
 document.getElementById('amptxt').textContent=msg[kl];
@@ -157,12 +173,13 @@ if(!epc){ee.textContent='k.A.';ee.className='rv2';}
 else if(epc>=50){ee.textContent='OK ('+epc+'%)';ee.className='rv2 pos';}
 else if(epc>=35){ee.textContent='Knapp ('+epc+'%)';ee.className='rv2 warn';}
 else{ee.textContent='Kritisch ('+epc+'%)';ee.className='rv2 neg';}
-var txt='<b>Rechenweg:</b><br/>'+'Stressverlust ('+Math.round(sp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(sv)+'</b><br/>'+'Mindestreserve ('+Math.round(rp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(mr)+'</b><br/>'+'Zusatzpuffer (10% x Maintenance): <b>'+fmt(zp)+'</b><br/>'+'Empfohlene freie Reserve: <b>'+fmt(fr)+'</b><br/><br/>'+'Short Options BP: <b>'+fmt(sobp)+'</b> minus freie Reserve: <b>'+fmt(fr)+'</b><br/>'+'= Maximal nutzbar: <b>'+fmt(mx)+'</b>';
+var txt='<b>Rechenweg:</b><br/>'+'Stressverlust ('+Math.round(sp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(sv)+'</b><br/>'+'Mindestreserve ('+Math.round(rp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(mr)+'</b><br/>'+'Zusatzpuffer (10% Maintenance; sonst 5% NLV): <b>'+fmt(zp)+'</b><br/>'+'Empfohlene freie Reserve: <b>'+fmt(fr)+'</b><br/><br/>'+'Short Options BP: <b>'+fmt(sobp)+'</b> minus freie Reserve: <b>'+fmt(fr)+'</b><br/>'+'= Maximal nutzbar: <b>'+fmt(mx)+'</b>';
 document.getElementById('erkl').innerHTML=txt;
 document.getElementById('result').style.display='block';
 document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
-loadSaved();
+try{loadSaved();}catch(e){document.getElementById("sbadge").textContent="Speicher nicht verfügbar";}
 </script>
+<script src="risk.js?v=3.0.2"></script>
 </body>
 </html>
