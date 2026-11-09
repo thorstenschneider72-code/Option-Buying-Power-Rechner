@@ -75,7 +75,7 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 <div class="card">
 <h2>Short-Put-Risiken</h2>
 <p class="erk">Nur ungedeckte, physisch gelieferte Standard-Aktienputs in USD (100 Aktien je Kontrakt), Reg-T. Keine Indizes, gehebelten Produkte, Spreads, Portfolio Margin oder angepassten Kontrakte. Alle offenen Short Puts dieses Kontos erfassen; keine Ableitung aus Buying Power.</p>
-<div id="positions"></div><button type="button" class="btnd" onclick="addPut();saveRisk()">Position hinzufügen</button>
+<div id="positions"></div><button type="button" class="btnd" style="background:#4338ca;color:#fff;border-color:#7c6ff7" onclick="addPut();saveRisk()">Position hinzufügen</button>
 <label class="fl" for="stockValue">Aktueller Marktwert sonstiger Long-Aktien ($)</label><span class="fh">Ohne Put-Underlying-Nominal; angenommene Kursreaktion 1:1 zum Markt.</span><input type="number" id="stockValue" min="0" oninput="saveRisk()"/>
 <label class="fl" for="volFactor">Zeitwert-Faktor im Stress (Annahme, mindestens 1)</label><input type="number" id="volFactor" min="1" step="0.1" value="2" oninput="saveRisk()"/>
 <label class="fl" for="houseFactor">Faktor für geschätzte Put-Margin (House-Aufschlag, mindestens 1)</label><input type="number" id="houseFactor" min="1" step="0.1" value="1" oninput="saveRisk()"/>
@@ -91,7 +91,7 @@ input[type=range]{width:100%;accent-color:#7c6ff7;margin-top:6px}
 <div class="rg">
 <div class="rb"><div class="rl3">Freie Reserve</div><div class="rv2" id="fres">-</div></div>
 <div class="rb"><div class="rl3">Equity minus Maintenance (Momentaufnahme)</div><div class="rv2" id="abst">-</div></div>
-<div class="rb"><div class="rl3">Stressverlust</div><div class="rv2" id="strv">-</div></div>
+<div class="rb"><div class="rl3">Pauschaler Stressabschlag</div><div class="rv2" id="strv">-</div></div>
 <div class="rb"><div class="rl3">Equity Check</div><div class="rv2" id="eqck">-</div></div>
 </div>
 <div class="erk" id="erkl"></div><p class="erk">Diese Reserve-Faustregel ist keine Schwab-Marginberechnung und keine Empfehlung für neue Positionen. Equity-Percent-Farben sind frei gewählte Warnschwellen.</p>
@@ -172,10 +172,10 @@ else{ee.textContent='Kritisch ('+epc+'%)';ee.className='rv2 neg';}
 var txt='<b>Rechenweg:</b><br/>'+'Stressverlust ('+Math.round(sp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(sv)+'</b><br/>'+'Mindestreserve ('+Math.round(rp*100)+'% x '+fmt(nlv)+'): <b>'+fmt(mr)+'</b><br/>'+'Zusatzpuffer (10% Maintenance; sonst 5% NLV): <b>'+fmt(zp)+'</b><br/>'+'Empfohlene freie Reserve: <b>'+fmt(fr)+'</b><br/><br/>'+'Short Options BP: <b>'+fmt(sobp)+'</b> minus freie Reserve: <b>'+fmt(fr)+'</b><br/>'+'= Maximal nutzbar: <b>'+fmt(mx)+'</b>';
 document.getElementById('erkl').innerHTML=txt;
 document.getElementById('result').style.display='block';
-document.getElementById('result').scrollIntoView({behavior:'smooth'});
+document.getElementById('riskResult').scrollIntoView({behavior:'smooth'});
 }
 try{loadSaved();}catch(e){document.getElementById("sbadge").textContent="Speicher nicht verfügbar";}
 </script>
-<script src="risk.js"></script>
+<script src="risk.js?v=3.0.1"></script>
 </body>
 </html>

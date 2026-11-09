@@ -21,7 +21,7 @@ class El {
  constructor(){this.value='';this.children=[];this.style={};this.textContent='';}
  append(...c){this.children.push(...c);} replaceChildren(){this.children=[];}
  insertRow(){const r=new El();r.insertCell=()=>{const c=new El();r.append(c);return c;};this.append(r);return r;}
- scrollIntoView(){} remove(){}
+ scrollIntoView(){} remove(){} setAttribute(){}
 }
 const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
 const els={};for(const m of html.matchAll(/id="([^"]+)"/g))els[m[1]]=new El();

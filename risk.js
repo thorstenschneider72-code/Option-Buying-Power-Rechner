@@ -40,7 +40,8 @@ window.renderRisk=function(){
   if(!Number.isFinite(stock)||stock<0){paragraph('Für Szenarien den Long-Aktienmarktwert eingeben (0 ausdrücklich zulässig). Reserve-Faustregel bleibt verfügbar.');return true;}
   paragraph('Szenarioannahmen: alle Aktien und Put-Underlyings fallen gleich stark. Put-Mark = innerer Wert im Szenario + heutiger Zeitwert × Faktor '+time+'; bei 0 % unveränderter Mark. Put-Margin × House-Faktor '+house+'. Sonstige Maintenance bleibt konstant. Keine Modellierung von Laufzeit, Greeks, Hedging, Zinsen oder Liquidität.');
   const canAnchor=Number.isFinite(meq)&&meq>0&&Number.isFinite(req)&&req>=base.current;
-  const wrap=document.createElement('div');wrap.style.overflowX='auto';const table=document.createElement('table');table.style.cssText='width:100%;font-size:.8rem;text-align:left;border-spacing:12px';
+  paragraph('Auf kleinen Bildschirmen die Tabelle seitlich wischen, um alle Spalten zu sehen.');
+  const wrap=document.createElement('div');wrap.style.overflowX='auto';wrap.tabIndex=0;wrap.setAttribute('aria-label','Seitlich scrollbare Stressszenarien');const table=document.createElement('table');table.style.cssText='width:100%;font-size:.8rem;text-align:left;border-spacing:12px';
   const header=table.insertRow();['Markt','Geschätzter Verlust¹','Put-Margin²','Gesamt-Maintenance³','Margin Equity³','Überschuss³','ITM-Strike-Nominal'].forEach(t=>{const th=document.createElement('th');th.textContent=t;header.append(th);});
   [...new Set([0,.1,.2,Number(document.getElementById('str').value)/100,.3])].sort((a,b)=>a-b).forEach(drop=>{
     const r=analyseRisk(puts,stock,drop,time,house), total=canAnchor?req-base.current+r.stressed:null, eq=meq-r.loss;
