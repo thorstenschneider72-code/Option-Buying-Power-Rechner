@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {parsePositions,model,csvRows}=require('../pm021.js');
+const {parsePositions,parseBalances,model,csvRows}=require('../pm021.js');
 assert.equal(csvRows('"a,b","c""d"\n')[0][0],'a,b');
 const csv='"Symbol","Qty (Quantity)","Price","Asset Type"\n"SOXL","100","50","Equity"\n"SOXL 11/20/2026 52.00 P","-1","4.8","Option"\n';
 const p=parsePositions(csv);
@@ -23,4 +23,10 @@ assert.ok(callStress.callLoss<0,'covered call should gain value on underlying de
 assert.ok(Math.abs(callStress.totalLoss-(callStress.stockLoss+callStress.putLoss+callStress.callLoss))<1e-8);
 const missingCall=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"XYZ 11/20/2026 45.00 C","-1","2","Option"\n');
 assert.deepEqual(missingCall.missing,['XYZ']);
+const balances=parseBalances('"Balances for account XXXX as of 11/10/2026 06:18 AM ET"\\nAccount Value,"$516,978.23"\\nMargin Equity,"$349,464.65"\\nEquity Percent,"67%"\\nCash Secured Put Requirement,"$144,900.00"\\n');
+assert.equal(balances.accountValue,516978.23);
+assert.equal(balances.marginEquity,349464.65);
+assert.equal(balances.cashSecuredPutRequirement,144900);
+assert.ok(Number.isNaN(balances.maintenance),'maintenance must not be invented');
+assert.throws(()=>parseBalances('Foo,12\\n'),/Account Value oder Margin Equity fehlt/);
 console.log('PM-021 CSV and scenario tests passed');
