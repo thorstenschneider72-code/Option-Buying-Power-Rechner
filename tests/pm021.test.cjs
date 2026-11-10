@@ -5,7 +5,7 @@ const csv='"Symbol","Qty (Quantity)","Price","Asset Type"\n"SOXL","100","50","Eq
 const p=parsePositions(csv);
 assert.equal(p.puts.length,1);assert.equal(p.missing.length,0);
 const r=model(p,{marginEquity:100000,maintenance:20000,drop:.2,houseFactor:1.5,timeFactor:2});
-assert.equal(r.nominal,5200);assert.equal(r.stockLoss,3000);assert.ok(r.putLoss>0);
+assert.equal(r.nominal,5200);assert.ok(Math.abs(r.stockLoss-3000)<1e-8);assert.ok(r.putLoss>0);
 assert.ok(r.stressReq>20000);
 assert.equal(model(p,{marginEquity:100000,maintenance:20000,drop:0,houseFactor:1,timeFactor:1}).baseExcess,80000);
 const missing=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"JNUG 11/20/2026 140.00 P","-1","9.95","Option"\n');
