@@ -36,15 +36,15 @@ function parsePositions(text){
   }
   if(!symbols.size&&!options.length)throw Error('Keine erkennbaren Positionen gefunden.');
   const puts=options.filter(o=>o.kind==='P'&&o.qty<0);
-  const missing=[...new Set(puts.filter(p=>!symbols.has(p.symbol)).map(p=>p.symbol))];
+  const missing=[...new Set(options.filter(o=>o.qty<0&&!symbols.has(o.symbol)).map(o=>o.symbol))];
   return {stocks:[...symbols.values()],options,puts,missing,warnings};
 }
 function model(data,params){
   const {marginEquity,maintenance,houseFactor=1.5,timeFactor=2,drop=.2}=params;
   if(![marginEquity,maintenance,houseFactor,timeFactor,drop].every(Number.isFinite)||marginEquity<=0||maintenance<0||houseFactor<1||timeFactor<1||drop<0||drop>1)throw Error('Ungültige Szenarioparameter.');
-  if(data.missing.length)throw Error('Fehlende Basiswerte für Short Puts: '+data.missing.join(', ')+'. Bitte fehlende Kurse ergänzen.');
+  if(data.missing.length)throw Error('Fehlende Basiswerte für Short-Optionen: '+data.missing.join(', ')+'. Bitte fehlende Kurse ergänzen.');
   const stockMap=new Map(data.stocks.map(s=>[s.symbol,s]));
-  let stockLoss=0,putLoss=0,nominal=0,modelBase=0,modelStress=0,leveragedStock=0,leveragedPut=0;
+  let stockLoss=0,putLoss=0,callLoss=0,nominal=0,modelBase=0,modelStress=0,leveragedStock=0,leveragedPut=0;
   for(const s of data.stocks){
     if(s.qty<=0)continue; // short shares not modelled
     const d=Math.min(.95,drop*s.leverage),v=s.qty*s.price;
@@ -62,10 +62,19 @@ function model(data,params){
     modelBase+=req(spot,p.mark);modelStress+=req(stressedSpot,stressedMark);
     if(s.leverage>1)leveragedPut+=qty*100*p.strike;
   }
+  for(const call of data.options.filter(o=>o.kind==='C'&&o.qty<0)){
+    const s=stockMap.get(call.symbol),qty=-call.qty;
+    const shock=Math.min(.95,drop*s.leverage),stressedSpot=s.price*(1-shock);
+    const intrinsic=Math.max(s.price-call.strike,0);
+    const time=Math.max(0,call.mark-intrinsic);
+    const stressedMark=Math.max(stressedSpot-call.strike,0)+time*timeFactor;
+    callLoss+=(stressedMark-call.mark)*100*qty;
+  }
+  // Short-call P/L only: uncovered call maintenance and upside stress not modelled.
   // Conservative full-account house shock; broker may use other rules.
   const stressReq=Math.max(0,maintenance-modelBase+modelStress)*houseFactor;
-  const equity=marginEquity-stockLoss-putLoss;
-  return {stockLoss,putLoss,totalLoss:stockLoss+putLoss,nominal,leveragedStock,leveragedPut,modelBase,modelStress,stressReq,equity,excess:equity-stressReq,baseExcess:marginEquity-maintenance,ratio:maintenance/marginEquity};
+  const equity=marginEquity-stockLoss-putLoss-callLoss;
+  return {stockLoss,putLoss,callLoss,totalLoss:stockLoss+putLoss+callLoss,nominal,leveragedStock,leveragedPut,modelBase,modelStress,stressReq,equity,excess:equity-stressReq,baseExcess:marginEquity-maintenance,ratio:maintenance/marginEquity};
 }
 root.PM021={csvRows,parsePositions,model,LEVERAGE};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.PM021;
@@ -83,7 +92,7 @@ function ready(){
   '<div class="field"><label class="fl" for="pmHouse">Gesamt-Maintenance-Faktor im Stress (≥1)</label><input id="pmHouse" type="number" min="1" step=".1" value="1.5"/></div>'+
   '<div class="field"><label class="fl" for="pmTime">Put-Zeitwert-Faktor im Stress (≥1)</label><input id="pmTime" type="number" min="1" step=".1" value="2"/></div>'+
   '<button type="button" class="btn" id="pmRun">CSV-Stresstest berechnen</button><div id="pmOutput" aria-live="polite"></div>'+
-  '<p class="erk">Achtung: Nur Long-Aktien und Short Puts werden neu bewertet. Short Calls, Short-Aktien, Korrelation, täglicher Hebelpfad, Options-Greeks, Spread-Offsets und Zuteilungs-Margin fehlen. Die gesamte Maintenance wird pauschal mit dem House-Faktor multipliziert. CSV und Kontowerte müssen vom selben Zeitpunkt stammen. Kein positives Ergebnis ist eine Handelsfreigabe.</p>';
+  '<p class="erk">Achtung: Nur Long-Aktien und Short Puts werden neu bewertet. Ungedeckte Short-Call-Margin, Short-Aktien, Korrelation, täglicher Hebelpfad, Options-Greeks, Spread-Offsets und Zuteilungs-Margin fehlen. Die gesamte Maintenance wird pauschal mit dem House-Faktor multipliziert. CSV und Kontowerte müssen vom selben Zeitpunkt stammen. Kein positives Ergebnis ist eine Handelsfreigabe.</p>';
   target.parentNode.insertBefore(card,target.nextSibling);
   let parsed=null;
   const output=card.querySelector('#pmOutput');
@@ -93,13 +102,13 @@ function ready(){
     try{parsed=parsePositions(await file.text());
       const missingBox=card.querySelector('#pmMissing');missingBox.replaceChildren();
       if(parsed.missing.length){
-        const note=document.createElement('p');note.className='erk';note.textContent='Für diese Short-Put-Basiswerte fehlen Kurszeilen. Trage die aktuellen Kurse aus derselben Schwab-Momentaufnahme ein. Ohne vollständige Kurse wird keine Stressrechnung durchgeführt.';missingBox.append(note);
+        const note=document.createElement('p');note.className='erk';note.textContent='Für diese Short-Options-Basiswerte fehlen Kurszeilen. Trage die aktuellen Kurse aus derselben Schwab-Momentaufnahme ein. Ohne vollständige Kurse wird keine Stressrechnung durchgeführt.';missingBox.append(note);
         for(const symbol of parsed.missing){
           const label=document.createElement('label');label.className='fl';label.textContent=symbol+' – aktueller Basiswertkurs ($)';
           const input=document.createElement('input');input.type='number';input.min='0.01';input.step='any';input.dataset.symbol=symbol;label.append(input);missingBox.append(label);
         }
       }
-      output.textContent='Eingelesen: '+parsed.stocks.length+' Aktien-/ETF-Zeilen, '+parsed.puts.length+' Short-Put-Zeilen, '+parsed.options.length+' Optionszeilen. '+(parsed.missing.length?'Fehlende Put-Basiswerte: '+parsed.missing.join(', '):'Alle Put-Basiswerte vorhanden.')+(parsed.warnings.length?' Warnungen: '+parsed.warnings.join('; '):'');}
+      output.textContent='Eingelesen: '+parsed.stocks.length+' Aktien-/ETF-Zeilen, '+parsed.puts.length+' Short-Put-Zeilen, '+parsed.options.length+' Optionszeilen. '+(parsed.missing.length?'Fehlende Options-Basiswerte: '+parsed.missing.join(', '):'Alle Put-Basiswerte vorhanden.')+(parsed.warnings.length?' Warnungen: '+parsed.warnings.join('; '):'');}
     catch(err){output.textContent=err.message;}
   });
   card.querySelector('#pmRun').addEventListener('click',()=>{
@@ -117,13 +126,13 @@ function ready(){
       }
       parsed.missing=[];
       const table=document.createElement('table');table.style.cssText='width:100%;font-size:.78rem;text-align:left;border-spacing:8px';
-      const header=table.insertRow();['Markt','Aktienverlust','Put-Verlust','Stress-Maintenance','Stress-Equity','Puffer'].forEach(t=>{const h=document.createElement('th');h.textContent=t;header.append(h);});
+      const header=table.insertRow();['Markt','Aktienverlust','Put-Verlust','Call-Verlust/Gewinn','Stress-Maintenance','Stress-Equity','Puffer'].forEach(t=>{const h=document.createElement('th');h.textContent=t;header.append(h);});
       const results=[0,.1,.2,.3,.4].map(drop=>model(parsed,{marginEquity,maintenance,houseFactor:drop===0?1:houseFactor,timeFactor:drop===0?1:timeFactor,drop}));
-      results.forEach((r,i)=>{const row=table.insertRow();[i===0?'Heute':'−'+i*10+' %',fmt(r.stockLoss),fmt(r.putLoss),fmt(r.stressReq),fmt(r.equity),fmt(r.excess)].forEach(t=>row.insertCell().textContent=t);});
+      results.forEach((r,i)=>{const row=table.insertRow();[i===0?'Heute':'−'+i*10+' %',fmt(r.stockLoss),fmt(r.putLoss),fmt(r.callLoss),fmt(r.stressReq),fmt(r.equity),fmt(r.excess)].forEach(t=>row.insertCell().textContent=t);});
       const wrap=document.createElement('div');wrap.style.overflowX='auto';wrap.append(table);output.append(wrap);
       const p=document.createElement('p');p.className='erk';p.textContent='Short-Put-Nominal: '+fmt(results[0].nominal)+'; davon gehebelte Basiswerte: '+fmt(results[0].leveragedPut)+'. Aktien-/ETF-Wert in gehebelten Long-Positionen: '+fmt(results[0].leveragedStock)+'. Modellierte Put-Margin heute: '+fmt(results[0].modelBase)+'. Gemeldete Maintenance: '+fmt(maintenance)+'. Die 0-%-Zeile verwendet den gemeldeten Brokerwert ohne House-Aufschlag. Unterdeckung im Szenario bedeutet modelliertes Risiko, nicht einen sicheren Margin Call.';output.append(p);
       if(results[0].modelBase>maintenance){const w=document.createElement('p');w.className='erk';w.textContent='WARNUNG: Modellierte Put-Margin übersteigt die gesamte gemeldete Maintenance. Konto-/Positionsdaten oder Reg-T-Modell passen nicht zusammen. Szenario-Puffer nicht verlässlich.';output.prepend(w);}
-      if(parsed.options.some(o=>o.kind==='C'&&o.qty<0)){const w=document.createElement('p');w.className='erk';w.textContent='Short Calls sind vorhanden und werden nicht neu bewertet. Verluste können dadurch über- oder unterschätzt werden.';output.append(w);}
+      if(parsed.options.some(o=>o.kind==='C'&&o.qty<0)){const w=document.createElement('p');w.className='erk';w.textContent='Short Calls werden mit einem vereinfachten inneren Wert und Zeitwert neu bewertet. Ihre Marginanforderungen und ein Kursanstieg sind NICHT modelliert; Risiken können über- oder unterschätzt werden.';output.append(w);}
     }catch(err){output.textContent=err.message;}
   });
 }
