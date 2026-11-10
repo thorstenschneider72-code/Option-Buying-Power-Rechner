@@ -181,6 +181,7 @@ function ready(){
       }
       parsed.missing=[];
       updateDashboard();
+      if(balances&&Number.isFinite(balances.marginEquity)&&Math.abs(marginEquity-balances.marginEquity)>1){const warning=document.createElement('p');warning.className='wb';warning.textContent='KONTOABWEICHUNG: Manuell eingegebene Margin Equity '+fmt(marginEquity)+' weicht vom Balances-Export '+fmt(balances.marginEquity)+' ab. Verschiedene Momentaufnahmen nicht vermischen; Stresstest nicht für Handelsentscheidungen verwenden.';output.append(warning);}
       if(balances&&positionAsOf&&balances.asOf&&normalizeSchwabTime(positionAsOf)!==normalizeSchwabTime(balances.asOf)){const warning=document.createElement('p');warning.className='wb';warning.textContent='ZEITWARNUNG: Positionsdatei ('+positionAsOf+') und Balances-Datei ('+balances.asOf+') verwenden unterschiedliche Zeitangaben. Ergebnisse nur nach manueller Prüfung verwenden.';output.append(warning);}
       const table=document.createElement('table');table.style.cssText='width:100%;font-size:.78rem;text-align:left;border-spacing:8px';
       const header=table.insertRow();['Markt','Aktienverlust','Put-Verlust','Call-Verlust/Gewinn','Stress-Maintenance','Stress-Equity','Puffer'].forEach(t=>{const h=document.createElement('th');h.textContent=t;header.append(h);});
