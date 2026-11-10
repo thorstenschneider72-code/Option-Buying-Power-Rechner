@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {parsePositions,parseBalances,model,csvRows}=require('../pm021.js');
+const {parsePositions,parseBalances,model,csvRows,normalizeSchwabTime}=require('../pm021.js');
 assert.equal(csvRows('"a,b","c""d"\n')[0][0],'a,b');
 const csv='"Symbol","Qty (Quantity)","Price","Asset Type"\n"SOXL","100","50","Equity"\n"SOXL 11/20/2026 52.00 P","-1","4.8","Option"\n';
 const p=parsePositions(csv);
@@ -34,5 +34,5 @@ assert.throws(()=>parseBalances('Foo,12\n'),/Account Value oder Margin Equity fe
 assert.throws(()=>parseBalances('Account Value,\nMargin Equity,\n'),/Account Value oder Margin Equity fehlt/);
 const unreadable=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","100","50","Equity"\n"ABC BAD OPTION","-1","3","Option"\n');
 assert.equal(unreadable.skippedOptions,1);
-assert.equal(PM021.normalizeSchwabTime('06:18 AM ET, 2026/11/10'),PM021.normalizeSchwabTime('11/10/2026 06:18 AM ET'));
+assert.equal(normalizeSchwabTime('06:18 AM ET, 2026/11/10'),normalizeSchwabTime('11/10/2026 06:18 AM ET'));
 console.log('PM-021 CSV and scenario tests passed');
