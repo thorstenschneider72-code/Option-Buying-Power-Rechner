@@ -1,7 +1,7 @@
 /* PM-021: local Schwab CSV scenario helper. Not a broker margin forecast. */
 (function(root){
 'use strict';
-const LEVERAGE={AGQ:2,CRWL:2,JNUG:2,LLYX:2,METU:2,NUGT:2,PANG:2,SOXL:3,TQQQ:3,UGL:2};
+const LEVERAGE={AGQ:2,CRWL:2,ETHT:2,JNUG:2,LLYX:2,METU:2,NUGT:2,PANG:2,SOXL:3,TQQQ:3,UGL:2};
 const fmt=n=>Number.isFinite(n)?n.toLocaleString('de-DE',{style:'currency',currency:'USD',maximumFractionDigits:0}):'k.A.';
 function csvRows(text){
   const rows=[];let row=[],cell='',quoted=false;
@@ -75,7 +75,7 @@ function ready(){
   if(!target)return;
   const card=document.createElement('section');card.className='card';card.innerHTML=
   '<h2>PM-021 · Schwab-CSV-Stresstest (experimentell)</h2>'+
-  '<p class="erk">Positionsdatei wird ausschließlich hier im Browser verarbeitet; keine Übertragung an GitHub oder einen Server. Für vollständige Szenarien müssen alle Short-Put-Basiswerte als Aktien-/ETF-Zeilen in der CSV enthalten sein. Gehebelte ETFs: vereinfachter Faktor 2×/3×, maximal 95 % Kursverlust. Das ist keine Prognose der ETF-Entwicklung oder der Schwab-Margin.</p>'+
+  '<p class="erk">Positionsdatei wird ausschließlich hier im Browser verarbeitet; keine Übertragung an GitHub oder einen Server. Für vollständige Short-Put-Szenarien müssen alle Basiswertkurse vorhanden sein; fehlende Kurse sind manuell zu ergänzen. Gehebelte ETFs: vereinfachter Faktor 2×/3×, maximal 95 % Kursverlust. Das ist keine Prognose der ETF-Entwicklung oder der Schwab-Margin.</p>'+
   '<label class="fl" for="pmfile">Schwab Individual-Positions-CSV</label><input id="pmfile" type="file" accept=".csv,text/csv" />'+
   '<div id="pmMissing"></div>'+ 
   '<div class="field"><label class="fl" for="pmEquity">Margin Equity aus thinkorswim ($)</label><input id="pmEquity" type="number" min="0" step="any" placeholder="Aktueller Schwab-Wert"/></div>'+
@@ -112,7 +112,7 @@ function ready(){
         const price=input.value.trim()===''?NaN:Number(input.value);
         if(!Number.isFinite(price)||price<=0)throw Error('Bitte gültigen aktuellen Kurs für '+input.dataset.symbol+' eingeben.');
         const symbol=input.dataset.symbol;
-        parsed.stocks.push({symbol,qty:0,price,leverage:LEVERAGE[symbol]||1});
+        const existing=parsed.stocks.find(s=>s.symbol===symbol);\n        if(existing){existing.price=price;}else{parsed.stocks.push({symbol,qty:0,price,leverage:LEVERAGE[symbol]||1});}
       }
       parsed.missing=[];
       const table=document.createElement('table');table.style.cssText='width:100%;font-size:.78rem;text-align:left;border-spacing:8px';
