@@ -77,6 +77,7 @@ function ready(){
   '<h2>PM-021 · Schwab-CSV-Stresstest (experimentell)</h2>'+
   '<p class="erk">Positionsdatei wird ausschließlich hier im Browser verarbeitet; keine Übertragung an GitHub oder einen Server. Für vollständige Szenarien müssen alle Short-Put-Basiswerte als Aktien-/ETF-Zeilen in der CSV enthalten sein. Gehebelte ETFs: vereinfachter Faktor 2×/3×, maximal 95 % Kursverlust. Das ist keine Prognose der ETF-Entwicklung oder der Schwab-Margin.</p>'+
   '<label class="fl" for="pmfile">Schwab Individual-Positions-CSV</label><input id="pmfile" type="file" accept=".csv,text/csv" />'+
+  '<div id="pmMissing"></div>'+ 
   '<div class="field"><label class="fl" for="pmEquity">Margin Equity aus thinkorswim ($)</label><input id="pmEquity" type="number" min="0" step="any" placeholder="Aktueller Schwab-Wert"/></div>'+
   '<div class="field"><label class="fl" for="pmReq">Maintenance Requirement aus thinkorswim ($)</label><input id="pmReq" type="number" min="0" step="any" placeholder="Aktueller Schwab-Wert"/></div>'+
   '<div class="field"><label class="fl" for="pmHouse">Gesamt-Maintenance-Faktor im Stress (≥1)</label><input id="pmHouse" type="number" min="1" step=".1" value="1.5"/></div>'+
@@ -89,7 +90,16 @@ function ready(){
   card.querySelector('#pmfile').addEventListener('change',async e=>{
     parsed=null;output.textContent='';
     const file=e.target.files[0];if(!file)return;
-    try{parsed=parsePositions(await file.text());output.textContent='Eingelesen: '+parsed.stocks.length+' Aktien-/ETF-Zeilen, '+parsed.puts.length+' Short-Put-Zeilen, '+parsed.options.length+' Optionszeilen. '+(parsed.missing.length?'Fehlende Put-Basiswerte: '+parsed.missing.join(', '):'Alle Put-Basiswerte vorhanden.')+(parsed.warnings.length?' Warnungen: '+parsed.warnings.join('; '):'');}
+    try{parsed=parsePositions(await file.text());
+      const missingBox=card.querySelector('#pmMissing');missingBox.replaceChildren();
+      if(parsed.missing.length){
+        const note=document.createElement('p');note.className='erk';note.textContent='Für diese Short-Put-Basiswerte fehlen Kurszeilen. Trage die aktuellen Kurse aus derselben Schwab-Momentaufnahme ein. Ohne vollständige Kurse wird keine Stressrechnung durchgeführt.';missingBox.append(note);
+        for(const symbol of parsed.missing){
+          const label=document.createElement('label');label.className='fl';label.textContent=symbol+' – aktueller Basiswertkurs ($)';
+          const input=document.createElement('input');input.type='number';input.min='0.01';input.step='any';input.dataset.symbol=symbol;label.append(input);missingBox.append(label);
+        }
+      }
+      output.textContent='Eingelesen: '+parsed.stocks.length+' Aktien-/ETF-Zeilen, '+parsed.puts.length+' Short-Put-Zeilen, '+parsed.options.length+' Optionszeilen. '+(parsed.missing.length?'Fehlende Put-Basiswerte: '+parsed.missing.join(', '):'Alle Put-Basiswerte vorhanden.')+(parsed.warnings.length?' Warnungen: '+parsed.warnings.join('; '):'');}
     catch(err){output.textContent=err.message;}
   });
   card.querySelector('#pmRun').addEventListener('click',()=>{
@@ -98,6 +108,13 @@ function ready(){
     const read=id=>{const s=card.querySelector('#'+id).value;return s.trim()===''?NaN:Number(s);};
     const marginEquity=read('pmEquity'),maintenance=read('pmReq'),houseFactor=read('pmHouse'),timeFactor=read('pmTime');
     try{
+      for(const input of card.querySelectorAll('#pmMissing input')){
+        const price=input.value.trim()===''?NaN:Number(input.value);
+        if(!Number.isFinite(price)||price<=0)throw Error('Bitte gültigen aktuellen Kurs für '+input.dataset.symbol+' eingeben.');
+        const symbol=input.dataset.symbol;
+        parsed.stocks.push({symbol,qty:0,price,leverage:LEVERAGE[symbol]||1});
+      }
+      parsed.missing=[];
       const table=document.createElement('table');table.style.cssText='width:100%;font-size:.78rem;text-align:left;border-spacing:8px';
       const header=table.insertRow();['Markt','Aktienverlust','Put-Verlust','Stress-Maintenance','Stress-Equity','Puffer'].forEach(t=>{const h=document.createElement('th');h.textContent=t;header.append(h);});
       const results=[0,.1,.2,.3,.4].map(drop=>model(parsed,{marginEquity,maintenance,houseFactor:drop===0?1:houseFactor,timeFactor:drop===0?1:timeFactor,drop}));
