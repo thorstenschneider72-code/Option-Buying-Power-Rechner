@@ -27,7 +27,7 @@ function parsePositions(text){
     if(!r[0]||r[0].startsWith('Total'))continue;
     const type=r[ix('Asset Type')],qty=money(r[ix('Qty (Quantity)')]),price=money(r[ix('Price')]);
     if(!Number.isFinite(qty)||!Number.isFinite(price))continue;
-    if(type==='Equity'){symbols.set(r[0].trim(),{symbol:r[0].trim(),qty,price,leverage:LEVERAGE[r[0].trim()]||1});}
+    if(type==='Equity'||type==='ETFs & Closed End Funds'){symbols.set(r[0].trim(),{symbol:r[0].trim(),qty,price,leverage:LEVERAGE[r[0].trim()]||1});}
     if(type==='Option'){
       const m=r[0].match(/^(\S+)\s+(\d{2}\/\d{2}\/\d{4})\s+([\d.]+)\s+([PC])$/);
       if(!m){warnings.push('Unbekanntes Optionssymbol: '+r[0]);continue;}
