@@ -40,6 +40,11 @@ function parsePositions(text){
   return {stocks:[...symbols.values()],options,puts,missing,warnings,skippedOptions,skippedPositions};
 }
 
+function normalizeSchwabTime(value){
+  const s=String(value||'');const m=s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*ET/i),d=s.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})|(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(!m||!d)return null;
+  const year=d[1]||d[6],month=d[2]||d[4],day=d[3]||d[5];return [year,month.padStart(2,'0'),day.padStart(2,'0')].join('-')+' '+m[1].padStart(2,'0')+':'+m[2]+' '+m[3].toUpperCase()+' ET';
+}
 function parseBalances(text){
   const rows=csvRows(text), values=new Map();
   for(const row of rows){if(row.length>=2&&row[0].trim()&&row[1].trim())values.set(row[0].trim(),row[1].trim());}
@@ -88,7 +93,7 @@ function model(data,params){
   const equity=marginEquity-stockLoss-putLoss-callLoss;
   return {stockLoss,putLoss,callLoss,totalLoss:stockLoss+putLoss+callLoss,nominal,leveragedStock,leveragedPut,modelBase,modelStress,stressReq,equity,excess:equity-stressReq,baseExcess:marginEquity-maintenance,ratio:maintenance/marginEquity};
 }
-root.PM021={csvRows,parsePositions,parseBalances,model,LEVERAGE};
+root.PM021={csvRows,parsePositions,parseBalances,normalizeSchwabTime,model,LEVERAGE};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.PM021;
 if(typeof document==='undefined')return;
 function ready(){
@@ -176,7 +181,7 @@ function ready(){
       }
       parsed.missing=[];
       updateDashboard();
-      if(balances&&positionAsOf&&balances.asOf&&positionAsOf!==balances.asOf){const warning=document.createElement('p');warning.className='wb';warning.textContent='ZEITWARNUNG: Positionsdatei ('+positionAsOf+') und Balances-Datei ('+balances.asOf+') verwenden unterschiedliche Zeitangaben. Ergebnisse nur nach manueller Prüfung verwenden.';output.append(warning);}
+      if(balances&&positionAsOf&&balances.asOf&&normalizeSchwabTime(positionAsOf)!==normalizeSchwabTime(balances.asOf)){const warning=document.createElement('p');warning.className='wb';warning.textContent='ZEITWARNUNG: Positionsdatei ('+positionAsOf+') und Balances-Datei ('+balances.asOf+') verwenden unterschiedliche Zeitangaben. Ergebnisse nur nach manueller Prüfung verwenden.';output.append(warning);}
       const table=document.createElement('table');table.style.cssText='width:100%;font-size:.78rem;text-align:left;border-spacing:8px';
       const header=table.insertRow();['Markt','Aktienverlust','Put-Verlust','Call-Verlust/Gewinn','Stress-Maintenance','Stress-Equity','Puffer'].forEach(t=>{const h=document.createElement('th');h.textContent=t;header.append(h);});
       const results=[0,.1,.2,.3,.4].map(drop=>model(parsed,{marginEquity,maintenance,houseFactor:drop===0?1:houseFactor,timeFactor:drop===0?1:timeFactor,drop}));
