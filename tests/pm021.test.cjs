@@ -25,8 +25,12 @@ const missingCall=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"
 assert.deepEqual(missingCall.missing,['XYZ']);
 const balances=parseBalances('"Balances for account XXXX as of 11/10/2026 06:18 AM ET"\nAccount Value,"$516,978.23"\nMargin Equity,"$349,464.65"\nEquity Percent,"67%"\nCash Secured Put Requirement,"$144,900.00"\n');
 assert.equal(balances.accountValue,516978.23);
+assert.equal(balances.asOf,'11/10/2026 06:18 AM ET');
 assert.equal(balances.marginEquity,349464.65);
 assert.equal(balances.cashSecuredPutRequirement,144900);
 assert.ok(Number.isNaN(balances.maintenance),'maintenance must not be invented');
 assert.throws(()=>parseBalances('Foo,12\\n'),/Account Value oder Margin Equity fehlt/);
+assert.throws(()=>parseBalances('Account Value,\\nMargin Equity,\\n'),/Account Value oder Margin Equity fehlt/);
+const unreadable=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\\n"ABC","100","50","Equity"\\n"ABC BAD OPTION","-1","3","Option"\\n');
+assert.equal(unreadable.skippedOptions,1);
 console.log('PM-021 CSV and scenario tests passed');
