@@ -112,7 +112,8 @@ function ready(){
         const price=input.value.trim()===''?NaN:Number(input.value);
         if(!Number.isFinite(price)||price<=0)throw Error('Bitte gültigen aktuellen Kurs für '+input.dataset.symbol+' eingeben.');
         const symbol=input.dataset.symbol;
-        const existing=parsed.stocks.find(s=>s.symbol===symbol);\n        if(existing){existing.price=price;}else{parsed.stocks.push({symbol,qty:0,price,leverage:LEVERAGE[symbol]||1});}
+        const existing=parsed.stocks.find(s=>s.symbol===symbol);
+        if(existing){existing.price=price;}else{parsed.stocks.push({symbol,qty:0,price,leverage:LEVERAGE[symbol]||1});}
       }
       parsed.missing=[];
       const table=document.createElement('table');table.style.cssText='width:100%;font-size:.78rem;text-align:left;border-spacing:8px';
