@@ -27,7 +27,7 @@ function parsePositions(text){
     if(!r[0]||r[0].startsWith('Total'))continue;
     const type=r[ix('Asset Type')],qty=money(r[ix('Qty (Quantity)')]),price=money(r[ix('Price')]);
     if(!Number.isFinite(qty)||!Number.isFinite(price)){if(type==='Option'){warnings.push('Optionszeile ohne gültige Menge/Kurs: '+r[0]);skippedOptions++;}continue;}
-    if(type==='Equity'||type==='ETFs & Closed End Funds'){symbols.set(r[0].trim(),{symbol:r[0].trim(),qty,price,leverage:LEVERAGE[r[0].trim()]||1});}
+    if(type==='Equity'||type==='ETFs & Closed End Funds'){const symbol=r[0].trim();if(symbols.has(symbol))warnings.push('Doppelte Aktien-/ETF-Zeile: '+symbol+' (letzte Zeile verwendet)');symbols.set(symbol,{symbol,qty,price,leverage:LEVERAGE[symbol]||1});}
     if(type==='Option'){
       const m=r[0].match(/^(\S+)\s+(\d{2}\/\d{2}\/\d{4})\s+([\d.]+)\s+([PC])$/);
       if(!m){warnings.push('Unbekanntes Optionssymbol: '+r[0]);skippedOptions++;continue;}
@@ -42,7 +42,7 @@ function parsePositions(text){
 
 function parseBalances(text){
   const rows=csvRows(text), values=new Map();
-  for(const row of rows){if(row.length>=2&&row[0].trim())values.set(row[0].trim(),row[1].trim());}
+  for(const row of rows){if(row.length>=2&&row[0].trim()&&row[1].trim())values.set(row[0].trim(),row[1].trim());}
   const read=k=>values.has(k)?money(values.get(k)):NaN;
   const header=rows.length&&rows[0].length?rows[0][0]:'';
   const dateMatch=header.match(/as of\s+(.+)$/i);
@@ -181,6 +181,7 @@ function ready(){
       results.forEach((r,i)=>{const row=table.insertRow();[i===0?'Heute':'−'+i*10+' %',fmt(r.stockLoss),fmt(r.putLoss),fmt(r.callLoss),fmt(r.stressReq),fmt(r.equity),fmt(r.excess)].forEach(t=>row.insertCell().textContent=t);});
       const wrap=document.createElement('div');wrap.style.overflowX='auto';wrap.append(table);output.append(wrap);
       const p=document.createElement('p');p.className='erk';p.textContent='Short-Put-Nominal: '+fmt(results[0].nominal)+'; davon gehebelte Basiswerte: '+fmt(results[0].leveragedPut)+'. Aktien-/ETF-Wert in gehebelten Long-Positionen: '+fmt(results[0].leveragedStock)+'. Modellierte Put-Margin heute: '+fmt(results[0].modelBase)+'. Gemeldete Maintenance: '+fmt(maintenance)+'. Die 0-%-Zeile verwendet den gemeldeten Brokerwert ohne House-Aufschlag. Unterdeckung im Szenario bedeutet modelliertes Risiko, nicht einen sicheren Margin Call.';output.append(p);
+      const stress20=results[2];const risk=document.createElement('p');risk.className='wb';risk.textContent='−20-%-Szenario: modellierter Depotverlust '+fmt(stress20.totalLoss)+'; '+(balances&&balances.accountValue>0?(100*stress20.totalLoss/balances.accountValue).toFixed(1)+' % des Account Value. ':'Depotverlustquote nicht verfügbar (Balances-CSV fehlt). ')+(stress20.excess<0?'MODELLIERTE UNTERDECKUNG. ':'Modellierter Puffer: '+fmt(stress20.excess)+'. ')+'Keine Schwab-Margin-Call-Prognose oder Handelsfreigabe.';output.prepend(risk);
       if(results[0].modelBase>maintenance){const w=document.createElement('p');w.className='erk';w.textContent='WARNUNG: Modellierte Put-Margin übersteigt die gesamte gemeldete Maintenance. Konto-/Positionsdaten oder Reg-T-Modell passen nicht zusammen. Szenario-Puffer nicht verlässlich.';output.prepend(w);}
       if(parsed.options.some(o=>o.kind==='C'&&o.qty<0)){const w=document.createElement('p');w.className='erk';w.textContent='Short Calls werden mit einem vereinfachten inneren Wert und Zeitwert neu bewertet. Ihre Marginanforderungen und ein Kursanstieg sind NICHT modelliert; Risiken können über- oder unterschätzt werden.';output.append(w);}
     }catch(err){output.textContent=err.message;}
