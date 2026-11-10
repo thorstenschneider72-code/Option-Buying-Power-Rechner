@@ -27,6 +27,7 @@ const balances=parseBalances('"Balances for account XXXX as of 11/10/2026 06:18 
 assert.equal(balances.accountValue,516978.23);
 assert.equal(balances.asOf,'11/10/2026 06:18 AM ET');
 assert.equal(balances.marginEquity,349464.65);
+assert.equal(parseBalances('Account Value,1000\nMargin Equity,\nMargin Equity,800\n').marginEquity,800);
 assert.equal(balances.cashSecuredPutRequirement,144900);
 assert.ok(Number.isNaN(balances.maintenance),'maintenance must not be invented');
 assert.throws(()=>parseBalances('Foo,12\n'),/Account Value oder Margin Equity fehlt/);
