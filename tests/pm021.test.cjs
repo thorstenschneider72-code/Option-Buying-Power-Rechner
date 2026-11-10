@@ -34,4 +34,5 @@ assert.throws(()=>parseBalances('Foo,12\n'),/Account Value oder Margin Equity fe
 assert.throws(()=>parseBalances('Account Value,\nMargin Equity,\n'),/Account Value oder Margin Equity fehlt/);
 const unreadable=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","100","50","Equity"\n"ABC BAD OPTION","-1","3","Option"\n');
 assert.equal(unreadable.skippedOptions,1);
+assert.equal(PM021.normalizeSchwabTime('06:18 AM ET, 2026/11/10'),PM021.normalizeSchwabTime('11/10/2026 06:18 AM ET'));
 console.log('PM-021 CSV and scenario tests passed');
