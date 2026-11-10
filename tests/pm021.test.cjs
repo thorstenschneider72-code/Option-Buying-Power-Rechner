@@ -11,7 +11,7 @@ assert.equal(model(p,{marginEquity:100000,maintenance:20000,drop:0,houseFactor:1
 const missing=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"JNUG 11/20/2026 140.00 P","-1","9.95","Option"\n');
 assert.deepEqual(missing.missing,['JNUG']);
 assert.throws(()=>model(missing,{marginEquity:100000,maintenance:20000,drop:.2}),/Fehlende Basiswerte/);
-const etf=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\\n"ETHT","700","11.3378","ETFs & Closed End Funds"\\n');
+const etf=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ETHT","700","11.3378","ETFs & Closed End Funds"\n');
 assert.equal(etf.stocks.length,1);
 assert.equal(etf.stocks[0].leverage,2);
 const etfStress=model(etf,{marginEquity:100000,maintenance:20000,drop:.2,houseFactor:1.5,timeFactor:2});
