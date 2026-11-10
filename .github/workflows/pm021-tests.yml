@@ -1,0 +1,16 @@
+name: PM-021 checks
+on:
+  push:
+    branches: [feature/pm021-schwab-csv-stress]
+  pull_request:
+    branches: [main]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/risk.test.cjs
+      - run: node tests/pm021.test.cjs
