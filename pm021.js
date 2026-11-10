@@ -17,27 +17,27 @@ function csvRows(text){
   row.push(cell);if(row.some(v=>v.trim()))rows.push(row);
   return rows;
 }
-function money(s){const v=Number(String(s??'').replace(/[$,%\s]/g,'').replace(/,/g,''));return Number.isFinite(v)?v:NaN;}
+function money(s){const raw=String(s??'').trim();if(!raw||raw==='--'||raw==='N/A')return NaN;const v=Number(raw.replace(/[$,%\s]/g,'').replace(/,/g,''));return Number.isFinite(v)?v:NaN;}
 function parsePositions(text){
   const rows=csvRows(text),hi=rows.findIndex(r=>r[0]==='Symbol'&&r.includes('Asset Type'));
   if(hi<0)throw Error('Schwab-Positions-CSV: Spaltenkopf nicht gefunden.');
   const headers=rows[hi],ix=k=>headers.indexOf(k);
-  const symbols=new Map(),options=[],warnings=[];
+  const symbols=new Map(),options=[],warnings=[];let skippedOptions=0;
   for(const r of rows.slice(hi+1)){
     if(!r[0]||r[0].startsWith('Total'))continue;
     const type=r[ix('Asset Type')],qty=money(r[ix('Qty (Quantity)')]),price=money(r[ix('Price')]);
-    if(!Number.isFinite(qty)||!Number.isFinite(price))continue;
+    if(!Number.isFinite(qty)||!Number.isFinite(price)){if(type==='Option'){warnings.push('Optionszeile ohne gültige Menge/Kurs: '+r[0]);skippedOptions++;}continue;}
     if(type==='Equity'||type==='ETFs & Closed End Funds'){symbols.set(r[0].trim(),{symbol:r[0].trim(),qty,price,leverage:LEVERAGE[r[0].trim()]||1});}
     if(type==='Option'){
       const m=r[0].match(/^(\S+)\s+(\d{2}\/\d{2}\/\d{4})\s+([\d.]+)\s+([PC])$/);
-      if(!m){warnings.push('Unbekanntes Optionssymbol: '+r[0]);continue;}
+      if(!m){warnings.push('Unbekanntes Optionssymbol: '+r[0]);skippedOptions++;continue;}
       options.push({symbol:m[1],expiry:m[2],strike:Number(m[3]),kind:m[4],qty,mark:price});
     }
   }
   if(!symbols.size&&!options.length)throw Error('Keine erkennbaren Positionen gefunden.');
   const puts=options.filter(o=>o.kind==='P'&&o.qty<0);
   const missing=[...new Set(options.filter(o=>o.qty<0&&!symbols.has(o.symbol)).map(o=>o.symbol))];
-  return {stocks:[...symbols.values()],options,puts,missing,warnings};
+  return {stocks:[...symbols.values()],options,puts,missing,warnings,skippedOptions};
 }
 
 function parseBalances(text){
@@ -103,7 +103,7 @@ function ready(){
   '<div class="field"><label class="fl" for="pmHouse">Gesamt-Maintenance-Faktor im Stress (≥1)</label><input id="pmHouse" type="number" min="1" step=".1" value="1.5"/></div>'+
   '<div class="field"><label class="fl" for="pmTime">Put-Zeitwert-Faktor im Stress (≥1)</label><input id="pmTime" type="number" min="1" step=".1" value="2"/></div>'+
   '<button type="button" class="btn" id="pmRun">CSV-Stresstest berechnen</button><div id="pmOutput" aria-live="polite"></div>'+
-  '<p class="erk">Achtung: Nur Long-Aktien und Short Puts werden neu bewertet. Ungedeckte Short-Call-Margin, Short-Aktien, Korrelation, täglicher Hebelpfad, Options-Greeks, Spread-Offsets und Zuteilungs-Margin fehlen. Die gesamte Maintenance wird pauschal mit dem House-Faktor multipliziert. CSV und Kontowerte müssen vom selben Zeitpunkt stammen. Kein positives Ergebnis ist eine Handelsfreigabe.</p>';
+  '<p class="erk">Achtung: Long-Aktien/ETFs sowie Short Puts und Short Calls werden vereinfacht neu bewertet. Ungedeckte Short-Call-Margin, Short-Aktien, Korrelation, täglicher Hebelpfad, Options-Greeks, Spread-Offsets und Zuteilungs-Margin fehlen. Die gesamte Maintenance wird pauschal mit dem House-Faktor multipliziert. CSV und Kontowerte müssen vom selben Zeitpunkt stammen. Kein positives Ergebnis ist eine Handelsfreigabe.</p>';
   target.parentNode.insertBefore(card,target.nextSibling);
   let parsed=null;
 
@@ -126,8 +126,8 @@ function ready(){
     const nom=parsed?parsed.puts.reduce((sum,p)=>sum-p.qty*100*p.strike,0):NaN;
     dashText('pmDashNominal',Number.isFinite(nom)?fmt(nom):'k.A.');
     const status=dashboard.querySelector('#pmDashStatus');
-    const complete=!!parsed&&parsed.missing.length===0&&Number.isFinite(eq)&&eq>0&&Number.isFinite(req)&&req>=0;
-    status.textContent=complete?'Daten vorhanden: Szenario berechenbar, aber keine Handelsfreigabe.':'Unvollständig: '+(!parsed?'Positions-CSV fehlt. ':'')+(parsed&&parsed.missing.length?'Fehlende Options-Basiswertkurse: '+parsed.missing.join(', ')+'. ':'')+(!(Number.isFinite(eq)&&eq>0)?'Margin Equity fehlt. ':'')+(!(Number.isFinite(req)&&req>=0)?'Maintenance Requirement fehlt. ':'')+'Keine Risikofreigabe.';
+    const complete=!!parsed&&parsed.missing.length===0&&parsed.skippedOptions===0&&Number.isFinite(eq)&&eq>0&&Number.isFinite(req)&&req>=0;
+    status.textContent=complete?'Daten vorhanden: Szenario berechenbar, aber keine Handelsfreigabe.':'Unvollständig: '+(!parsed?'Positions-CSV fehlt. ':'')+(parsed&&parsed.skippedOptions?'Nicht lesbare Optionszeilen: '+parsed.skippedOptions+'. ':'')+(parsed&&parsed.missing.length?'Fehlende Options-Basiswertkurse: '+parsed.missing.join(', ')+'. ':'')+(!(Number.isFinite(eq)&&eq>0)?'Margin Equity fehlt. ':'')+(!(Number.isFinite(req)&&req>=0)?'Maintenance Requirement fehlt. ':'')+'Keine Risikofreigabe.';
   };
   dashboard.querySelector('#pmBalancesFile').addEventListener('change',async e=>{
     const file=e.target.files[0];if(!file)return;
@@ -162,6 +162,7 @@ function ready(){
   card.querySelector('#pmRun').addEventListener('click',()=>{
     output.replaceChildren();
     if(!parsed){output.textContent='Bitte zuerst eine Positions-CSV einlesen.';return;}
+    if(parsed.skippedOptions){output.textContent='Berechnung gesperrt: '+parsed.skippedOptions+' Optionszeilen konnten nicht eingelesen werden. Bitte CSV prüfen.';return;}
     const read=id=>{const s=card.querySelector('#'+id).value;return s.trim()===''?NaN:Number(s);};
     const marginEquity=read('pmEquity'),maintenance=read('pmReq'),houseFactor=read('pmHouse'),timeFactor=read('pmTime');
     try{
