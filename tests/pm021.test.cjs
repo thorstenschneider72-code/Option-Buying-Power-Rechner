@@ -23,7 +23,7 @@ assert.ok(callStress.callLoss<0,'covered call should gain value on underlying de
 assert.ok(Math.abs(callStress.totalLoss-(callStress.stockLoss+callStress.putLoss+callStress.callLoss))<1e-8);
 const missingCall=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"XYZ 11/20/2026 45.00 C","-1","2","Option"\n');
 assert.deepEqual(missingCall.missing,['XYZ']);
-const balances=parseBalances('"Balances for account XXXX as of 11/10/2026 06:18 AM ET"\\nAccount Value,"$516,978.23"\\nMargin Equity,"$349,464.65"\\nEquity Percent,"67%"\\nCash Secured Put Requirement,"$144,900.00"\\n');
+const balances=parseBalances('"Balances for account XXXX as of 11/10/2026 06:18 AM ET"\nAccount Value,"$516,978.23"\nMargin Equity,"$349,464.65"\nEquity Percent,"67%"\nCash Secured Put Requirement,"$144,900.00"\n');
 assert.equal(balances.accountValue,516978.23);
 assert.equal(balances.marginEquity,349464.65);
 assert.equal(balances.cashSecuredPutRequirement,144900);
