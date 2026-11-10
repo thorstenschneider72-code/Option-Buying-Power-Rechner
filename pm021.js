@@ -45,7 +45,7 @@ function parseBalances(text){
   for(const row of rows){if(row.length>=2&&row[0].trim())values.set(row[0].trim(),row[1].trim());}
   const read=k=>values.has(k)?money(values.get(k)):NaN;
   const header=rows.length&&rows[0].length?rows[0][0]:'';
-  const dateMatch=header.match(/as of\\s+(.+)$/i);
+  const dateMatch=header.match(/as of\s+(.+)$/i);
   const result={accountValue:read('Account Value'),marginEquity:read('Margin Equity'),equityPercent:read('Equity Percent'),cashSecuredPutRequirement:read('Cash Secured Put Requirement'),cashOnHold:read('Cash on Hold'),maintenance:read('Maintenance Requirement'),asOf:dateMatch?dateMatch[1]:null};
   if(!Number.isFinite(result.accountValue)||!Number.isFinite(result.marginEquity))throw Error('Schwab-Balances-CSV: Account Value oder Margin Equity fehlt.');
   return result;
