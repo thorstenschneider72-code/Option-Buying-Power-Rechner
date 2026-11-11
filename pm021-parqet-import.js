@@ -23,6 +23,34 @@ function parse(text){
   return {key,id,portfolio,name:String(p.name||id).slice(0,200),valueEUR:v,eligible:v>=0};
  });
 }
+function suggestBucket(p){
+ const name=p.portfolio.toLowerCase(),instrument=p.name.toLowerCase();
+ if(name.includes('schwab'))return 'schwab';
+ if(name.includes('lars erichsen'))return 'larsPrivate';
+ if(p.valueEUR<0)return 'unassigned';
+ if(instrument.includes('gold')||instrument.includes('krügerrand')||instrument.includes('krugerrand')||instrument.includes('britannia')||instrument.includes('britania'))return 'bucket2';
+ return 'unassigned';
+}
+function parseCSV(text){
+ if(typeof text!=='string'||text.length>8e6)throw Error('CSV-Datei leer oder zu groß.');
+ // RFC 4180-style quoted fields, including escaped quotes and embedded newlines.
+ const records=[];let record=[],field='',quoted=false;
+ for(let i=0;i<text.length;i++){
+  const ch=text[i];
+  if(ch==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
+  else if(ch===','&&!quoted){record.push(field);field='';}
+  else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&text[i+1]==='\n')i++;record.push(field);if(record.some(v=>v.trim()))records.push(record);record=[];field='';}
+  else field+=ch;
+ }
+ if(quoted)throw Error('Nicht geschlossene CSV-Anführungszeichen.');
+ record.push(field);if(record.some(v=>v.trim()))records.push(record);
+ if(records.length<2)throw Error('CSV ohne Positionen.');
+ const head=records.shift().map(s=>s.replace(/^\uFEFF/,'').trim());
+ const keys=['portfolio','id','name','currency','currentValue'];
+ if(!keys.every(k=>head.includes(k)))throw Error('CSV-Spalten fehlen: '+keys.filter(k=>!head.includes(k)).join(', '));
+ const data=records.map(row=>{if(row.length!==head.length)throw Error('Ungültige CSV-Spaltenanzahl.');const p=Object.fromEntries(head.map((k,i)=>[k,row[i]]));p.currentValue=Number(p.currentValue);return p;});
+ return parse(JSON.stringify({holdings:data}));
+}
 function allocate(holdings,mapping){
  if(!Array.isArray(holdings)||!mapping||typeof mapping!=='object')throw Error('Zuordnungen fehlen.');
  const seen=new Set(),positions=[],unassigned=[];
@@ -40,6 +68,6 @@ function allocate(holdings,mapping){
  }
  return {positions,unassigned,excludedNegativeEUR:holdings.filter(p=>!p.eligible).reduce((a,p)=>a+p.valueEUR,0)};
 }
-root.PM021ParqetImport={parse,allocate,BUCKETS};
+root.PM021ParqetImport={parse,parseCSV,allocate,suggestBucket,BUCKETS};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.PM021ParqetImport;
 })(typeof globalThis!=='undefined'?globalThis:this);
