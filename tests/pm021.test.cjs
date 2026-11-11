@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {parsePositions,parseBalances,model,csvRows,normalizeSchwabTime}=require('../pm021.js');
+const {parsePositions,parseBalances,model,csvRows,normalizeSchwabTime,sameSnapshot}=require('../pm021.js');
 assert.equal(csvRows('"a,b","c""d"\n')[0][0],'a,b');
 const csv='"Symbol","Qty (Quantity)","Price","Asset Type"\n"SOXL","100","50","Equity"\n"SOXL 11/20/2026 52.00 P","-1","4.8","Option"\n';
 const p=parsePositions(csv);
@@ -46,4 +46,7 @@ assert.deepEqual(naked.uncovered,['ABC']);
 assert.throws(()=>model(naked,{marginEquity:100000,maintenance:20000,drop:.2}),/Ungedeckte Short Calls/);
 const brokenPeg=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","100","50","Equity"\n"ABC BAD","-1","2","Peg Option"\n');
 assert.equal(brokenPeg.skippedOptions,1);
+assert.equal(sameSnapshot('06:18 AM ET, 2026/11/10','11/10/2026 06:18 AM ET'),true);
+assert.equal(sameSnapshot('06:18 AM ET, 2026/11/10','11/10/2026 06:19 AM ET'),false);
+assert.equal(sameSnapshot(null,'11/10/2026 06:18 AM ET'),false);
 console.log('PM-021 CSV and scenario tests passed');
