@@ -17,3 +17,4 @@ jobs:
       - run: node tests/pm021-portfolio.test.cjs
 
       - run: node tests/pm021-parqet-import.test.cjs
+      - run: node tests/pm021-parqet-audit.test.cjs
