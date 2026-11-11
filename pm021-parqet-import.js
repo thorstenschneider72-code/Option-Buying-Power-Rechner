@@ -16,12 +16,26 @@ function parse(text){
   const key=portfolio+'::'+id;
   if(!portfolio||!id||seen.has(key))throw Error('Portfolio und eindeutige Holding-ID erforderlich: '+(i+1));
   seen.add(key);
-  if(p.currency!=='EUR')throw Error('Position '+key+' muss bereits in EUR bewertet sein.');
+  if((p.currency||p.valueCurrency)!=='EUR')throw Error('Position '+key+' muss bereits in EUR bewertet sein.');
   const v=p.currentValue;
   if(typeof v!=='number'||!Number.isFinite(v))throw Error('Ungültiger Marktwert: '+key);
   // Negative valuations (e.g. short options) are real but cannot be allocated with the nonnegative bucket engine.
   return {key,id,portfolio,name:String(p.name||id).slice(0,200),valueEUR:v,eligible:v>=0};
  });
+}
+function convertConnectorExport(input){
+ const obj=typeof input==='string'?JSON.parse(input):input;
+ const portfolios=Array.isArray(obj)?obj:obj&&Array.isArray(obj.portfolios)?obj.portfolios:null;
+ if(!portfolios)throw Error('Erwartet wird {portfolios:[{name,holdings:[...]}]}.');
+ const holdings=[];
+ for(const port of portfolios){
+  if(!port||typeof port.name!=='string'||!Array.isArray(port.holdings))throw Error('Ungültiger Portfolio-Block.');
+  for(const h of port.holdings){
+   if(!h||typeof h.id!=='string')throw Error('Holding-ID fehlt.');
+   holdings.push({portfolio:port.name,id:h.id,name:h.name||h.id,currency:h.valueCurrency||h.currency,currentValue:h.currentValue});
+  }
+ }
+ return {holdings};
 }
 function suggestBucket(p){
  const name=p.portfolio.toLowerCase(),instrument=p.name.toLowerCase();
@@ -69,6 +83,6 @@ function allocate(holdings,mapping){
  }
  return {positions,unassigned,excludedNegativeEUR:holdings.filter(p=>!p.eligible).reduce((a,p)=>a+p.valueEUR,0)};
 }
-root.PM021ParqetImport={parse,parseCSV,allocate,suggestBucket,BUCKETS};
+root.PM021ParqetImport={parse,parseCSV,convertConnectorExport,allocate,suggestBucket,BUCKETS};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.PM021ParqetImport;
 })(typeof globalThis!=='undefined'?globalThis:this);
