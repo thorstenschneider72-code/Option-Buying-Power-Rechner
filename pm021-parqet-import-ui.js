@@ -43,11 +43,12 @@ function ready(){
    const mapping=selected();
    const result=globalThis.PM021ParqetImport.allocate(rows,mapping);
    const totals=globalThis.PM021Portfolio.summarize(result.positions);
+   const audit=globalThis.PM021ParqetAudit.audit(rows);
    for(const bucket of globalThis.PM021ParqetImport.BUCKETS){
     const el=document.getElementById('pmp-'+bucket);if(el)el.value=totals.totalsEUR[bucket].toFixed(2);
    }
    const run=document.getElementById('pmPortfolioRun');if(run)run.click();
-   status.textContent='Übernommen: '+result.positions.length+' nichtnegative Positionen; '+result.unassigned.length+' offene/ausgeschlossene Positionen; negative Bewertungen '+result.excludedNegativeEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+' separat abstimmen. Topfmodell aktualisiert.';
+   status.textContent='Übernommen: '+result.positions.length+' nichtnegative Positionen; '+result.unassigned.length+' offene/ausgeschlossene Positionen; negative Bewertungen '+result.excludedNegativeEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+' separat abstimmen. Topfmodell aktualisiert. Brutto positive Werte: '+audit.grossPositiveEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+'; Nettowert einschließlich negativer Bewertungen: '+audit.netEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+'. Dies ist noch keine validierte Gesamtbilanz.';
   }catch(e){status.textContent='Zuordnungsfehler: '+e.message;}
  });
 }
