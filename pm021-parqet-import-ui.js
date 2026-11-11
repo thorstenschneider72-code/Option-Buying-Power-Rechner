@@ -4,7 +4,7 @@
 function ready(){
  const host=document.getElementById('pmPortfolio');if(!host||!globalThis.PM021ParqetImport)return;
  const wrap=document.createElement('div');wrap.id='pmParqetImport';
- wrap.innerHTML='<h3>Parqet-Positionen lokal einlesen (Test)</h3><p>JSON-Datei mit Holding-ID, Portfolio, Name, currentValue und currency=EUR. Die Datei bleibt im Browser. Zuordnungen werden nicht an GitHub übertragen. Unklare Werte bleiben unzugeordnet.</p><input type="file" id="pmParqetFile" accept=".json,application/json"><div id="pmParqetMappings"></div><button type="button" id="pmParqetSave">Zuordnungen lokal speichern</button><button type="button" id="pmParqetExport">Zuordnungen als JSON sichern</button><label for="pmParqetMapFile">Gesicherte Zuordnungen laden</label><input type="file" id="pmParqetMapFile" accept=".json,application/json"><button type="button" id="pmParqetApply">Zuordnungen übernehmen</button><div id="pmParqetStatus" aria-live="polite"></div>';
+ wrap.innerHTML='<h3>Parqet-Positionen lokal einlesen (Test)</h3><p>JSON- oder CSV-Datei mit den Feldern portfolio, id, name, currentValue und currency=EUR. Die Datei bleibt im Browser. Zuordnungen werden nicht an GitHub übertragen. Unklare Werte bleiben unzugeordnet.</p><input type="file" id="pmParqetFile" accept=".json,.csv,application/json,text/csv"><div id="pmParqetMappings"></div><button type="button" id="pmParqetSave">Zuordnungen lokal speichern</button><button type="button" id="pmParqetExport">Zuordnungen als JSON sichern</button><label for="pmParqetMapFile">Gesicherte Zuordnungen laden</label><input type="file" id="pmParqetMapFile" accept=".json,application/json"><button type="button" id="pmParqetApply">Zuordnungen übernehmen</button><div id="pmParqetStatus" aria-live="polite"></div>';
  host.append(wrap);
  const file=wrap.querySelector('#pmParqetFile'),mappingHost=wrap.querySelector('#pmParqetMappings'),status=wrap.querySelector('#pmParqetStatus');
  let rows=null,selects=[];
@@ -20,18 +20,18 @@ function ready(){
   try{
    const f=file.files&&file.files[0];if(!f)return;
    if(f.size>8e6)throw Error('Datei über 8 MB.');
-   rows=globalThis.PM021ParqetImport.parse(await f.text());
+   const content=await f.text();rows=f.name.toLowerCase().endsWith('.csv')?globalThis.PM021ParqetImport.parseCSV(content):globalThis.PM021ParqetImport.parse(content);
    for(const p of rows){
     const line=document.createElement('div');line.className='field';
     const label=document.createElement('label');label.textContent=p.portfolio+' · '+p.name+' · '+p.valueEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'});label.htmlFor='pmmap-'+selects.length;
     const select=document.createElement('select');select.id=label.htmlFor;select.disabled=!p.eligible;
     for(const key of globalThis.PM021ParqetImport.BUCKETS){const option=document.createElement('option');option.value=key;option.textContent=labels[key];select.append(option);}
-    select.value='unassigned';line.append(label,select);mappingHost.append(line);selects.push({key:p.key,select});
+    select.value=globalThis.PM021ParqetImport.suggestBucket(p);line.append(label,select);mappingHost.append(line);selects.push({key:p.key,select});
    }
    applyMap(stored());
    const identifiers=new Map();for(const p of rows){if(!p.eligible)continue;const signature=p.name.trim().toLowerCase();if(!signature)continue;const arr=identifiers.get(signature)||[];arr.push(p.portfolio);identifiers.set(signature,arr);}
    const overlaps=[...identifiers].filter(([,ps])=>new Set(ps).size>1);
-   status.textContent=rows.length+' Positionen gelesen; '+overlaps.length+' gleiche Bezeichnungen in mehreren Depots (Prüfhinweis, kein automatischer Dublettenabzug). Gespeicherte Zuordnungen geladen, soweit vorhanden.';
+   status.textContent=rows.length+' Positionen gelesen. Vorschläge anhand von Depot und Gold-Bezeichnungen vorbelegt (bitte prüfen); '+overlaps.length+' gleiche Bezeichnungen in mehreren Depots (Prüfhinweis, kein automatischer Dublettenabzug). Gespeicherte Zuordnungen geladen, soweit vorhanden.';
   }catch(e){status.textContent='Importfehler: '+e.message;}
  });
  wrap.querySelector('#pmParqetSave').addEventListener('click',()=>{try{if(!rows)throw Error('Zuerst Positionen einlesen.');localStorage.setItem(storageKey,JSON.stringify({...stored(),...selected()}));status.textContent='Zuordnungen lokal in diesem Browser gespeichert.';}catch(e){status.textContent='Speichern fehlgeschlagen: '+e.message;}});
