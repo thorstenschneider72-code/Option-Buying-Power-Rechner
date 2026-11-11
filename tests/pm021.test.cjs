@@ -44,6 +44,6 @@ assert.ok(model(pegged,{marginEquity:100000,maintenance:20000,drop:.2}).callLoss
 const naked=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","100","50","Equity"\n"ABC 11/20/2026 45.00 C","-2","7","Peg Option"\n');
 assert.deepEqual(naked.uncovered,['ABC']);
 assert.throws(()=>model(naked,{marginEquity:100000,maintenance:20000,drop:.2}),/Ungedeckte Short Calls/);
-const brokenPeg=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC BAD","-1","2","Peg Option"\n');
+const brokenPeg=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","100","50","Equity"\n"ABC BAD","-1","2","Peg Option"\n');
 assert.equal(brokenPeg.skippedOptions,1);
 console.log('PM-021 CSV and scenario tests passed');
