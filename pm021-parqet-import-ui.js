@@ -46,7 +46,8 @@ function ready(){
    for(const bucket of globalThis.PM021ParqetImport.BUCKETS){
     const el=document.getElementById('pmp-'+bucket);if(el)el.value=totals.totalsEUR[bucket].toFixed(2);
    }
-   status.textContent='Übernommen: '+result.positions.length+' nichtnegative Positionen; '+result.unassigned.length+' offene/ausgeschlossene Positionen; negative Bewertungen '+result.excludedNegativeEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+' separat abstimmen. Bitte Topfmodell berechnen anklicken.';
+   const run=document.getElementById('pmPortfolioRun');if(run)run.click();
+   status.textContent='Übernommen: '+result.positions.length+' nichtnegative Positionen; '+result.unassigned.length+' offene/ausgeschlossene Positionen; negative Bewertungen '+result.excludedNegativeEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+' separat abstimmen. Topfmodell aktualisiert.';
   }catch(e){status.textContent='Zuordnungsfehler: '+e.message;}
  });
 }
