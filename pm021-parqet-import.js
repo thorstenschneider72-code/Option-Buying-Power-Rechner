@@ -6,6 +6,7 @@ function parse(text){
  if(typeof text!=='string'||text.length>8e6)throw Error('Datei leer oder größer als 8 MB.');
  let obj;try{obj=JSON.parse(text);}catch{throw Error('Bitte eine gültige JSON-Datei verwenden.');}
  const list=Array.isArray(obj)?obj:obj&&Array.isArray(obj.holdings)?obj.holdings:null;
+ if(obj&&obj.schema==='pm021-mapping-v1')throw Error('Das ist eine Zuordnungsdatei, keine Positionsdatei.');
  if(!list)throw Error('Erwartet wird eine Liste oder {holdings:[...]}.');
  if(list.length>5000)throw Error('Zu viele Positionen.');
  const seen=new Set();
