@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {parse,parseCSV,allocate,suggestBucket}=require('../pm021-parqet-import.js');
+const {parse,parseCSV,convertConnectorExport,allocate,suggestBucket}=require('../pm021-parqet-import.js');
 const rows=parse(JSON.stringify({holdings:[
  {portfolio:'ING',id:'h1',name:'ETF',currency:'EUR',currentValue:100},
  {portfolio:'Schwab',id:'h2',name:'Short option',currency:'EUR',currentValue:-20},
@@ -14,4 +14,5 @@ assert.throws(()=>allocate(rows,{'ING::h1':'nonsense'}),/Unbekannter/);
 const csv='portfolio,id,name,currency,currentValue\nING,one,"ETF, breit",EUR,123.45\nLars Erichsen Depot,two,Gold Producers,EUR,45';
 const imported=parseCSV(csv);assert.equal(imported.length,2);assert.equal(imported[0].name,'ETF, breit');assert.equal(suggestBucket(imported[0]),'unassigned');assert.equal(suggestBucket(imported[1]),'larsPrivate');
 assert.throws(()=>parseCSV('portfolio,id,name,currency,currentValue\nING,a,ETF,USD,12'),/EUR/);
+const snap=convertConnectorExport({portfolios:[{name:'ING',holdings:[{id:'h1',name:'ETF',valueCurrency:'EUR',currentValue:100}]}]});assert.equal(parse(JSON.stringify(snap))[0].valueEUR,100);
 console.log('PM-021 local Parqet import tests passed');
