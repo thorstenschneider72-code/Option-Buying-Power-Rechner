@@ -26,9 +26,9 @@ function parsePositions(text){
   for(const r of rows.slice(hi+1)){
     if(!r[0]||r[0].startsWith('Total'))continue;
     const type=r[ix('Asset Type')],qty=money(r[ix('Qty (Quantity)')]),price=money(r[ix('Price')]);
-    if(!Number.isFinite(qty)||!Number.isFinite(price)){if(type==='Option'){warnings.push('Optionszeile ohne gültige Menge/Kurs: '+r[0]);skippedOptions++;}else if(type==='Equity'||type==='ETFs & Closed End Funds'){warnings.push('Aktien-/ETF-Zeile ohne gültige Menge/Kurs: '+r[0]);skippedPositions++;}continue;}
+    if(!Number.isFinite(qty)||!Number.isFinite(price)){if(type==='Option'||type==='Peg Option'){warnings.push('Optionszeile ohne gültige Menge/Kurs: '+r[0]);skippedOptions++;}else if(type==='Equity'||type==='ETFs & Closed End Funds'){warnings.push('Aktien-/ETF-Zeile ohne gültige Menge/Kurs: '+r[0]);skippedPositions++;}continue;}
     if(type==='Equity'||type==='ETFs & Closed End Funds'){const symbol=r[0].trim();if(symbols.has(symbol))warnings.push('Doppelte Aktien-/ETF-Zeile: '+symbol+' (letzte Zeile verwendet)');symbols.set(symbol,{symbol,qty,price,leverage:LEVERAGE[symbol]||1});}
-    if(type==='Option'){
+    if(type==='Option'||type==='Peg Option'){
       const m=r[0].match(/^(\S+)\s+(\d{2}\/\d{2}\/\d{4})\s+([\d.]+)\s+([PC])$/);
       if(!m){warnings.push('Unbekanntes Optionssymbol: '+r[0]);skippedOptions++;continue;}
       options.push({symbol:m[1],expiry:m[2],strike:Number(m[3]),kind:m[4],qty,mark:price});
@@ -36,8 +36,11 @@ function parsePositions(text){
   }
   if(!symbols.size&&!options.length)throw Error('Keine erkennbaren Positionen gefunden.');
   const puts=options.filter(o=>o.kind==='P'&&o.qty<0);
+  const calls=options.filter(o=>o.kind==='C'&&o.qty<0);
+  const uncovered=calls.filter(o=>{const held=symbols.get(o.symbol)?.qty||0;return held<100*calls.filter(c=>c.symbol===o.symbol).reduce((n,c)=>n-c.qty,0);}).map(o=>o.symbol);
+  if(uncovered.length)warnings.push('Nicht vollständig gedeckte Short Calls: '+[...new Set(uncovered)].join(', '));
   const missing=[...new Set(options.filter(o=>o.qty<0&&!symbols.has(o.symbol)).map(o=>o.symbol))];
-  return {stocks:[...symbols.values()],options,puts,missing,warnings,skippedOptions,skippedPositions};
+  return {stocks:[...symbols.values()],options,puts,calls,uncovered:[...new Set(uncovered)],missing,warnings,skippedOptions,skippedPositions};
 }
 
 function normalizeSchwabTime(value){
@@ -60,6 +63,7 @@ function model(data,params){
   if(![marginEquity,maintenance,houseFactor,timeFactor,drop].every(Number.isFinite)||marginEquity<=0||maintenance<0||houseFactor<1||timeFactor<1||drop<0||drop>1)throw Error('Ungültige Szenarioparameter.');
   if(data.missing.length)throw Error('Fehlende Basiswerte für Short-Optionen: '+data.missing.join(', ')+'. Bitte fehlende Kurse ergänzen.');
   if(data.skippedOptions||data.skippedPositions)throw Error('Unvollständiger Positionsimport: Rechnung gesperrt.');
+  if(data.uncovered?.length)throw Error('Ungedeckte Short Calls: '+data.uncovered.join(', ')+'. Marginmodell nicht unterstützt.');
   const stockMap=new Map(data.stocks.map(s=>[s.symbol,s]));
   let stockLoss=0,putLoss=0,callLoss=0,nominal=0,modelBase=0,modelStress=0,leveragedStock=0,leveragedPut=0;
   for(const s of data.stocks){
@@ -161,7 +165,7 @@ function ready(){
         }
       }
       updateDashboard();
-      output.textContent='Positionszeitpunkt: '+(positionAsOf||'nicht erkannt')+'. '+(balances?'Balances-Zeitpunkt: '+(balances.asOf||'nicht erkannt')+'. Zeitgleichheit manuell prüfen. ':'')+'Eingelesen: '+parsed.stocks.length+' Aktien-/ETF-Zeilen, '+parsed.puts.length+' Short-Put-Zeilen, '+parsed.options.length+' Optionszeilen. '+(parsed.missing.length?'Fehlende Options-Basiswerte: '+parsed.missing.join(', '):'Alle Put-Basiswerte vorhanden.')+(parsed.warnings.length?' Warnungen: '+parsed.warnings.join('; '):'');}
+      output.textContent='Positionszeitpunkt: '+(positionAsOf||'nicht erkannt')+'. '+(balances?'Balances-Zeitpunkt: '+(balances.asOf||'nicht erkannt')+'. Zeitgleichheit manuell prüfen. ':'')+'Eingelesen: '+parsed.stocks.length+' Aktien-/ETF-Zeilen, '+parsed.puts.length+' Short-Put-Zeilen, '+parsed.options.length+' Optionszeilen (einschließlich Peg Option / Covered Calls). '+(parsed.missing.length?'Fehlende Options-Basiswerte: '+parsed.missing.join(', '):'Alle Put-Basiswerte vorhanden.')+(parsed.warnings.length?' Warnungen: '+parsed.warnings.join('; '):'');}
     catch(err){output.textContent=err.message;}
   });
   updateDashboard();
