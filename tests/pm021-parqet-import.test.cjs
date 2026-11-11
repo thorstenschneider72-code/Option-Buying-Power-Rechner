@@ -11,7 +11,7 @@ assert.equal(r.positions.length,2);assert.equal(r.excludedNegativeEUR,-20);asser
 assert.throws(()=>parse(JSON.stringify([{portfolio:'ING',id:'h1',currency:'EUR',currentValue:1},{portfolio:'ING',id:'h1',currency:'EUR',currentValue:2}])),/eindeutige/);
 assert.throws(()=>parse(JSON.stringify([{portfolio:'ING',id:'h1',currency:'USD',currentValue:2}])),/EUR/);
 assert.throws(()=>allocate(rows,{'ING::h1':'nonsense'}),/Unbekannter/);
-const csv='portfolio,id,name,currency,currentValue\\nING,one,"ETF, breit",EUR,123.45\\nLars Erichsen Depot,two,Gold Producers,EUR,45';
+const csv='portfolio,id,name,currency,currentValue\nING,one,"ETF, breit",EUR,123.45\nLars Erichsen Depot,two,Gold Producers,EUR,45';
 const imported=parseCSV(csv);assert.equal(imported.length,2);assert.equal(imported[0].name,'ETF, breit');assert.equal(suggestBucket(imported[0]),'unassigned');assert.equal(suggestBucket(imported[1]),'larsPrivate');
-assert.throws(()=>parseCSV('portfolio,id,name,currency,currentValue\\nING,a,ETF,USD,12'),/EUR/);
+assert.throws(()=>parseCSV('portfolio,id,name,currency,currentValue\nING,a,ETF,USD,12'),/EUR/);
 console.log('PM-021 local Parqet import tests passed');
