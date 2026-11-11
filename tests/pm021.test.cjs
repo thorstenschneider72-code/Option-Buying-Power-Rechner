@@ -35,4 +35,15 @@ assert.throws(()=>parseBalances('Account Value,\nMargin Equity,\n'),/Account Val
 const unreadable=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","100","50","Equity"\n"ABC BAD OPTION","-1","3","Option"\n');
 assert.equal(unreadable.skippedOptions,1);
 assert.equal(normalizeSchwabTime('06:18 AM ET, 2026/11/10'),normalizeSchwabTime('11/10/2026 06:18 AM ET'));
+// Real Schwab exports classify covered calls as "Peg Option", not "Option".
+const pegged=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","200","50","Equity"\n"ABC 11/20/2026 45.00 C","-2","7","Peg Option"\n');
+assert.equal(pegged.calls.length,1);
+assert.equal(pegged.options.length,1);
+assert.deepEqual(pegged.uncovered,[]);
+assert.ok(model(pegged,{marginEquity:100000,maintenance:20000,drop:.2}).callLoss<0);
+const naked=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC","100","50","Equity"\n"ABC 11/20/2026 45.00 C","-2","7","Peg Option"\n');
+assert.deepEqual(naked.uncovered,['ABC']);
+assert.throws(()=>model(naked,{marginEquity:100000,maintenance:20000,drop:.2}),/Ungedeckte Short Calls/);
+const brokenPeg=parsePositions('"Symbol","Qty (Quantity)","Price","Asset Type"\n"ABC BAD","-1","2","Peg Option"\n');
+assert.equal(brokenPeg.skippedOptions,1);
 console.log('PM-021 CSV and scenario tests passed');
