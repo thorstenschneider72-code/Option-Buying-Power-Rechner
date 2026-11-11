@@ -28,7 +28,8 @@ function suggestBucket(p){
  if(name.includes('schwab'))return 'schwab';
  if(name.includes('lars erichsen'))return 'larsPrivate';
  if(p.valueEUR<0)return 'unassigned';
- if(instrument.includes('gold')||instrument.includes('krügerrand')||instrument.includes('krugerrand')||instrument.includes('britannia')||instrument.includes('britania'))return 'bucket2';
+ if(instrument==='euwax gold ii'||instrument==='gold'||instrument.includes('krügerrand')||instrument.includes('krugerrand')||instrument.includes('britannia'))return 'bucket2';
+ if(instrument.includes('amundi euro overnight'))return 'bucket2';
  return 'unassigned';
 }
 function parseCSV(text){
