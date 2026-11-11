@@ -14,3 +14,4 @@ jobs:
           node-version: '22'
       - run: node tests/risk.test.cjs
       - run: node tests/pm021.test.cjs
+      - run: node tests/pm021-portfolio.test.cjs
