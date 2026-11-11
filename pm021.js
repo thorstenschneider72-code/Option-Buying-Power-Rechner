@@ -48,6 +48,10 @@ function normalizeSchwabTime(value){
   if(!m||!d)return null;
   const year=d[1]||d[6],month=d[2]||d[4],day=d[3]||d[5];return [year,month.padStart(2,'0'),day.padStart(2,'0')].join('-')+' '+m[1].padStart(2,'0')+':'+m[2]+' '+m[3].toUpperCase()+' ET';
 }
+function sameSnapshot(positionsTime,balancesTime){
+  const p=normalizeSchwabTime(positionsTime),b=normalizeSchwabTime(balancesTime);
+  return !!p&&!!b&&p===b;
+}
 function parseBalances(text){
   const rows=csvRows(text), values=new Map();
   for(const row of rows){if(row.length>=2&&row[0].trim()&&row[1].trim())values.set(row[0].trim(),row[1].trim());}
@@ -97,7 +101,7 @@ function model(data,params){
   const equity=marginEquity-stockLoss-putLoss-callLoss;
   return {stockLoss,putLoss,callLoss,totalLoss:stockLoss+putLoss+callLoss,nominal,leveragedStock,leveragedPut,modelBase,modelStress,stressReq,equity,excess:equity-stressReq,baseExcess:marginEquity-maintenance,ratio:maintenance/marginEquity};
 }
-root.PM021={csvRows,parsePositions,parseBalances,normalizeSchwabTime,model,LEVERAGE};
+root.PM021={csvRows,parsePositions,parseBalances,normalizeSchwabTime,sameSnapshot,model,LEVERAGE};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.PM021;
 if(typeof document==='undefined')return;
 function ready(){
@@ -136,7 +140,7 @@ function ready(){
     const nom=parsed?parsed.puts.reduce((sum,p)=>sum-p.qty*100*p.strike,0):NaN;
     dashText('pmDashNominal',Number.isFinite(nom)?fmt(nom):'k.A.');
     const status=dashboard.querySelector('#pmDashStatus');
-    const complete=!!parsed&&parsed.missing.length===0&&parsed.skippedOptions===0&&parsed.skippedPositions===0&&Number.isFinite(eq)&&eq>0&&Number.isFinite(req)&&req>=0;
+    const complete=!!parsed&&parsed.missing.length===0&&parsed.skippedOptions===0&&parsed.skippedPositions===0&&!parsed.uncovered?.length&&(!balances||sameSnapshot(positionAsOf,balances.asOf))&&Number.isFinite(eq)&&eq>0&&Number.isFinite(req)&&req>=0;
     status.textContent=complete?'Daten vorhanden: Szenario berechenbar, aber keine Handelsfreigabe.':'Unvollständig: '+(!parsed?'Positions-CSV fehlt. ':'')+(parsed&&(parsed.skippedOptions||parsed.skippedPositions)?'Nicht lesbare Positionszeilen: '+(parsed.skippedOptions+parsed.skippedPositions)+'. ':'')+(parsed&&parsed.missing.length?'Fehlende Options-Basiswertkurse: '+parsed.missing.join(', ')+'. ':'')+(!(Number.isFinite(eq)&&eq>0)?'Margin Equity fehlt. ':'')+(!(Number.isFinite(req)&&req>=0)?'Maintenance Requirement fehlt. ':'')+'Keine Risikofreigabe.';
   };
   dashboard.querySelector('#pmBalancesFile').addEventListener('change',async e=>{
@@ -173,6 +177,8 @@ function ready(){
     output.replaceChildren();
     if(!parsed){output.textContent='Bitte zuerst eine Positions-CSV einlesen.';return;}
     if(parsed.skippedOptions||parsed.skippedPositions){output.textContent='Berechnung gesperrt: '+(parsed.skippedOptions+parsed.skippedPositions)+' Positionszeilen konnten nicht eingelesen werden. Bitte CSV prüfen.';return;}
+    if(balances&&!sameSnapshot(positionAsOf,balances.asOf)){output.textContent='Berechnung gesperrt: Positions-CSV und Balances-CSV haben keinen nachweislich identischen Zeitstempel.';return;}
+    if(balances&&Number.isFinite(balances.cashSecuredPutRequirement)){const nominal=parsed.puts.reduce((sum,p)=>sum-p.qty*100*p.strike,0);if(Math.abs(nominal-balances.cashSecuredPutRequirement)>1){output.textContent='Berechnung gesperrt: Short-Put-Nominal '+fmt(nominal)+' stimmt nicht mit Schwab Cash Secured Put Requirement '+fmt(balances.cashSecuredPutRequirement)+' überein.';return;}}
     const read=id=>{const s=card.querySelector('#'+id).value;return s.trim()===''?NaN:Number(s);};
     const marginEquity=read('pmEquity'),maintenance=read('pmReq'),houseFactor=read('pmHouse'),timeFactor=read('pmTime');
     try{
