@@ -40,7 +40,7 @@ function ready(){
     'Lars-Erichsen gesamt (inkl. GmbH): '+euro(r.larsStrategyEUR)+'; Abweichung vom 400.000-€-Ziel: '+euro(r.larsTargetDifferenceEUR),
     'Schwab gesondert erfasst: '+euro(r.totalsEUR.schwab),
     'Drawdown: '+(r.drawdown===null?'nicht berechnet':(100*r.drawdown).toFixed(1)+' %')+' – '+r.drawdownStatus,
-    r.complete?'Zuordnung vollständig (nach eingegebenen Bereichen).':'Offene Zuordnung: '+euro(r.totalsEUR.unassigned)
+    r.totalsEUR.unassigned===0?'Kein unzugeordneter positiver Betrag in den erfassten Eingaben (keine Vollständigkeitsbestätigung).':'Offene Zuordnung: '+euro(r.totalsEUR.unassigned)
    ];
    for(const line of lines){const p=document.createElement('p');p.textContent=line;out.append(p);}
   }catch(err){out.textContent='Eingabeprüfung: '+err.message;}
