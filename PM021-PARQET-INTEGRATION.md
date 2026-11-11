@@ -31,3 +31,7 @@ Die Datei ist eine JSON-Liste oder ein Objekt mit Feld `holdings`. Pro Position:
 ```
 
 Negative Bewertungen werden separat ausgewiesen und nicht in positive Topfwerte eingerechnet. Die Zuordnungen bleiben in `localStorage` des verwendeten Browsers und können ohne Marktwerte als JSON gesichert und wieder eingelesen werden. Die Zuordnungsdatei enthält Positions-IDs und ist deshalb ebenfalls vertraulich zu behandeln. Die Zuordnungslogik prüft keine wirtschaftliche Identität gleicher Instrumente in unterschiedlichen Depots; eine Position kann legitim mehrfach vorhanden sein.
+
+## Connector-Snapshot (neu)
+
+Der Browser-Importer akzeptiert jetzt auch JSON-Snapshots in der Form `{\"portfolios\":[{\"name\":\"ING\",\"holdings\":[{\"id\":\"hld_...\",\"name\":\"Beispiel\",\"valueCurrency\":\"EUR\",\"currentValue\":123.45}]}]}`. Der Snapshot wird lokal auf das Holding-Importformat normalisiert. Es besteht **keine direkte Synchronisation** zwischen ChatGPT-Connector und GitHub Pages. Snapshots müssen separat lokal bereitgestellt werden. Keine echten Depotwerte in GitHub-Commits speichern.
