@@ -20,7 +20,7 @@ function ready(){
   try{
    const f=file.files&&file.files[0];if(!f)return;
    if(f.size>8e6)throw Error('Datei über 8 MB.');
-   const content=await f.text();rows=f.name.toLowerCase().endsWith('.csv')?globalThis.PM021ParqetImport.parseCSV(content):globalThis.PM021ParqetImport.parse(content);
+   const content=await f.text();if(f.name.toLowerCase().endsWith('.csv'))rows=globalThis.PM021ParqetImport.parseCSV(content);else {const data=JSON.parse(content);rows=globalThis.PM021ParqetImport.parse(JSON.stringify(data&&Array.isArray(data.portfolios)?globalThis.PM021ParqetImport.convertConnectorExport(data):data));}
    for(const p of rows){
     const line=document.createElement('div');line.className='field';
     const label=document.createElement('label');label.textContent=p.portfolio+' · '+p.name+' · '+p.valueEUR.toLocaleString('de-DE',{style:'currency',currency:'EUR'});label.htmlFor='pmmap-'+selects.length;
